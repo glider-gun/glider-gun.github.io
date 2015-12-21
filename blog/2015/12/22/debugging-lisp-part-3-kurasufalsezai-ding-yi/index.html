@@ -1,0 +1,299 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Debugging Lisp Part 3: クラスの再定義 - glider-gun's Blog</title>
+  <meta name="author" content="glider-gun">
+
+  
+  <meta name="description" content="このエントリーは、著者の許可をいただいて http://malisper.me/category/debugging-common-lisp/ のCommon Lispのデバッグに関する連載を翻訳するものです。 このエントリーは連載 Debbugging Lisp の第3回です。第1回はこちら、 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="glider-gun's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-71590051-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">glider-gun's Blog</a></h1>
+  
+    <h2>何か書きます</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="glider-gun.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Debugging Lisp Part 3: クラスの再定義</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-12-22T00:35:33+01:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>22</span><span class='date-suffix'>nd</span>, <span class='date-year'>2015</span></span> <span class='time'>12:35 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>このエントリーは、著者の許可をいただいて <a href="http://malisper.me/category/debugging-common-lisp/">http://malisper.me/category/debugging-common-lisp/</a> のCommon Lispのデバッグに関する連載を翻訳するものです。</p>
+
+<hr />
+
+<p>このエントリーは連載 Debbugging Lisp の第3回です。第1回は<a href="/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu">こちら</a>、第2回は<a href="/blog/2015/12/22/debugging-lisp-part-2-insupekuto">こちら</a>。</p>
+
+<p>Common Lisp Object System (CLOS) は非常に強力です。多重継承、多重ディスパッチ、メソッドの振る舞いを拡張するさまざまな異なるやり方を提供します。その内部では、ほとんどの実装は Metaobject Protocol(MOP) を使っています。これは CLOS 自身を使って CLOS を定義するものです。 MOP では、クラスはいくつかのインスタンス変数を持ったオブジェクトとして実装されます。そのインスタンス変数としては、クラス名、スーパークラス、またそのクラスの持つインスタンス変数のリストなどがあります。前回のエントリーの point クラスを見てみましょう:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>(defclass point ()
+</span><span class='line'>  ((x :accessor point-x :initarg :x :initform 0)
+</span><span class='line'>   (y :accessor point-y :initarg :y :initform 0)))</span></code></pre></td></tr></table></div></figure>
+
+
+<p>そして Slime インスペクタを使って point クラスオブジェクトを見てみましょう。クラスオブジェクトは関数 <strong>find-class</strong> で見つけることができます:</p>
+
+<!-- http://malisper.me/wp-content/uploads/2015/07/ezgif.com-optimize1.gif -->
+
+
+<p><img class="center" src="/images/2015-12-22/ezgif.com-optimize1.gif" width="600"></p>
+
+<p>MOP の利点は、 CLOS の振る舞いを微調整したいときには普通のオブジェクト指向プログラミングによって行えるということです。優れた例として、任意の述語(predecated)を CLOS のディスパッチに使えるようにする<a href="https://common-lisp.net/project/closer/filtered.html">filterd-functions</a>ライブラリがあります。MOPについてはもういいでしょう<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>。このエントリーでは CLOS の小さな一部分である、 <strong>update-instance-for-redefined-class</strong> についてお話しします。</p>
+
+<p><strong>update-instance-for-redefined-class</strong> は、クラスが(実行時に)再定義される度に呼ばれるメソッドです。これをオーバーライドすることでクラス再定義の際の振る舞いをカスタマイズすることが出来ます。
+たとえば何かのシミュレーション中で、先ほどのpointクラスを複素数を表すのに使っていたとしましょう。シミュレーションの一部として、pointオブジェクトを変数 <em>*location*</em> に保存しています。</p>
+
+<!-- http://malisper.me/wp-content/uploads/2015/07/ezgif.com-optimize-1.gif -->
+
+
+<p><img class="center" src="/images/2015-12-22/ezgif.com-optimize-1.gif" width="600"></p>
+
+<p>シミュレーションをプロファイリングしてみると、ボトルネックの一つが複素数同士のかけ算であることに気付きました。複素数のかけ算は極座標表示での方がずっと効率的ですから、あなたは point クラスの実装を直交座標から極座標に変えることにしました。これを(実行中に)行うためには、次のコードを走らせるだけです:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>(defmethod update-instance-for-redefined-class :before
+</span><span class='line'>     ((pos point) added deleted plist &key)
+</span><span class='line'>  (let ((x (getf plist 'x))
+</span><span class='line'>        (y (getf plist 'y)))
+</span><span class='line'>    (setf (point-rho pos) (sqrt (+ (* x x) (* y y)))
+</span><span class='line'>          (point-theta pos) (atan y x))))
+</span><span class='line'> 
+</span><span class='line'>(defclass point ()
+</span><span class='line'>  ((rho :initform 0 :accessor point-rho)
+</span><span class='line'>   (theta :initform 0 :accessor point-theta)))
+</span><span class='line'> 
+</span><span class='line'>(defmethod point-x ((pos point))
+</span><span class='line'>  (with-slots (rho theta) pos (* rho (cos theta))))
+</span><span class='line'> 
+</span><span class='line'>(defmethod point-y ((pos point))
+</span><span class='line'>  (with-slots (rho theta) pos (* rho (sin theta))))</span></code></pre></td></tr></table></div></figure>
+
+
+<p>これは要するに、 <strong>update-instance-for-redefined-class</strong> を拡張して、極座標実装での値 <em>rho</em> と <em>theta</em> を直交座標実装の値から計算するものです。 <strong>update-instance-for-redefined-class</strong> を拡張した後、このコードはクラスを再定義して、その時存在する全てのインスタンスを新しいクラスのインスタンスに変換します<sup id="fnref:2"><a href="#fn:2" rel="footnote">2</a></sup>。
+そして最後に、二つのメソッド <strong>point-x</strong> と <strong>point-y</strong> を定義し、 point クラスの元のインターフェースを保ちます<sup id="fnref:3"><a href="#fn:3" rel="footnote">3</a></sup>。コードを走らせてから <em>*location*</em> の中身をインスペクトすると、次のようなものが見えるはずです:</p>
+
+<!-- http://malisper.me/wp-content/uploads/2015/07/ezgif.com-optimize-21.gif -->
+
+
+<p><img class="center" src="/images/2015-12-22/ezgif.com-optimize-21.gif" width="600"></p>
+
+<p><em>*location*</em> は依然として同一のオブジェクトを指しているものの、今やそれは極座標実装になっています！ 正しく変換されたことを確かめるため、あなたはこのオブジェクトを与えて <strong>point-x</strong> 関数を呼び出し、 x 座標が同じままかどうか確かめることにしました:</p>
+
+<!-- http://malisper.me/wp-content/uploads/2015/07/ezgif.com-crop1.gif -->
+
+
+<p><img class="center" src="/images/2015-12-22/ezgif.com-crop1.gif" width="600"></p>
+
+<p>驚くべきことに、クラスの実装を完全に置き換えたにもかかわらず、全てのコードは動作し続けます。もしあなたが24時間365日動き続けていなければならないサービス内でクラスの実装を変更したくて、しかもそれがたまたま Common Lisp で書かれていたなら、 <strong>update-instance</strong> を使うことを思い出してください。</p>
+
+<p>原文: <a href="http://malisper.me/2015/07/22/debugging-lisp-part-3-redefining-classes/">http://malisper.me/2015/07/22/debugging-lisp-part-3-redefining-classes/</a></p>
+<div class="footnotes">
+<hr/>
+<ol>
+<li id="fn:1">
+<p>MOPについてもっと学びたい方は、"The Art of the Metaobject Protocol"を手に取ってみてください。オブジェクト指向プログラミングを作った人であるアラン・ケイは、1997年のOOPSLAでの講演でこの本を「この10年で最も良い本」だと言いました。<a href="#fnref:1" rev="footnote">&#8617;</a></p></li>
+<li id="fn:2">
+<p>実際には、どの時点でupdate-instance-for-redefined-classが呼ばれるかは仕様では策定されていません。 保証されているのは、最初にインスタンス変数がアクセスされるまでに呼ばれるということだけです。<a href="#fnref:2" rev="footnote">&#8617;</a></p></li>
+<li id="fn:3">
+<p>本当にインターフェースを保存するためには initialize-instance などいくつか他の関数も定義し直す必要はあります。<a href="#fnref:3" rev="footnote">&#8617;</a></p></li>
+</ol>
+</div>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">glider-gun</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2015-12-22T00:35:33+01:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>22</span><span class='date-suffix'>nd</span>, <span class='date-year'>2015</span></span> <span class='time'>12:35 am</span></time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi/" data-via="" data-counturl="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/12/22/debugging-lisp-part-2-insupekuto/" title="Previous Post: Debugging Lisp Part 2: インスペクト">&laquo; Debugging Lisp Part 2: インスペクト</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi/">Debugging Lisp Part 3: クラスの再定義</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/12/22/debugging-lisp-part-2-insupekuto/">Debugging Lisp Part 2: インスペクト</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu/">Debugging Lisp Part 1: 再コンパイル</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - glider-gun -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

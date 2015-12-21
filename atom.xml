@@ -4,7 +4,7 @@
   <title><![CDATA[glider-gun's Blog]]></title>
   <link href="http://glider-gun.github.io/atom.xml" rel="self"/>
   <link href="http://glider-gun.github.io/"/>
-  <updated>2015-12-22T00:33:23+01:00</updated>
+  <updated>2015-12-22T00:49:19+01:00</updated>
   <id>http://glider-gun.github.io/</id>
   <author>
     <name><![CDATA[glider-gun]]></name>
@@ -12,6 +12,113 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Debugging Lisp Part 3: クラスの再定義]]></title>
+    <link href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi/"/>
+    <updated>2015-12-22T00:35:33+01:00</updated>
+    <id>http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi</id>
+    <content type="html"><![CDATA[<p>このエントリーは、著者の許可をいただいて <a href="http://malisper.me/category/debugging-common-lisp/">http://malisper.me/category/debugging-common-lisp/</a> のCommon Lispのデバッグに関する連載を翻訳するものです。</p>
+
+<hr />
+
+<p>このエントリーは連載 Debbugging Lisp の第3回です。第1回は<a href="http://glider-gun.github.io/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu">こちら</a>、第2回は<a href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-2-insupekuto">こちら</a>。</p>
+
+<p>Common Lisp Object System (CLOS) は非常に強力です。多重継承、多重ディスパッチ、メソッドの振る舞いを拡張するさまざまな異なるやり方を提供します。その内部では、ほとんどの実装は Metaobject Protocol(MOP) を使っています。これは CLOS 自身を使って CLOS を定義するものです。 MOP では、クラスはいくつかのインスタンス変数を持ったオブジェクトとして実装されます。そのインスタンス変数としては、クラス名、スーパークラス、またそのクラスの持つインスタンス変数のリストなどがあります。前回のエントリーの point クラスを見てみましょう:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>(defclass point ()
+</span><span class='line'>  ((x :accessor point-x :initarg :x :initform 0)
+</span><span class='line'>   (y :accessor point-y :initarg :y :initform 0)))</span></code></pre></td></tr></table></div></figure>
+
+
+<p>そして Slime インスペクタを使って point クラスオブジェクトを見てみましょう。クラスオブジェクトは関数 <strong>find-class</strong> で見つけることができます:</p>
+
+<!-- http://malisper.me/wp-content/uploads/2015/07/ezgif.com-optimize1.gif -->
+
+
+<p><img class="center" src="http://glider-gun.github.io/images/2015-12-22/ezgif.com-optimize1.gif" width="600"></p>
+
+<p>MOP の利点は、 CLOS の振る舞いを微調整したいときには普通のオブジェクト指向プログラミングによって行えるということです。優れた例として、任意の述語(predecated)を CLOS のディスパッチに使えるようにする<a href="https://common-lisp.net/project/closer/filtered.html">filterd-functions</a>ライブラリがあります。MOPについてはもういいでしょう<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>。このエントリーでは CLOS の小さな一部分である、 <strong>update-instance-for-redefined-class</strong> についてお話しします。</p>
+
+<p><strong>update-instance-for-redefined-class</strong> は、クラスが(実行時に)再定義される度に呼ばれるメソッドです。これをオーバーライドすることでクラス再定義の際の振る舞いをカスタマイズすることが出来ます。
+たとえば何かのシミュレーション中で、先ほどのpointクラスを複素数を表すのに使っていたとしましょう。シミュレーションの一部として、pointオブジェクトを変数 <em>*location*</em> に保存しています。</p>
+
+<!-- http://malisper.me/wp-content/uploads/2015/07/ezgif.com-optimize-1.gif -->
+
+
+<p><img class="center" src="http://glider-gun.github.io/images/2015-12-22/ezgif.com-optimize-1.gif" width="600"></p>
+
+<p>シミュレーションをプロファイリングしてみると、ボトルネックの一つが複素数同士のかけ算であることに気付きました。複素数のかけ算は極座標表示での方がずっと効率的ですから、あなたは point クラスの実装を直交座標から極座標に変えることにしました。これを(実行中に)行うためには、次のコードを走らせるだけです:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>(defmethod update-instance-for-redefined-class :before
+</span><span class='line'>     ((pos point) added deleted plist &key)
+</span><span class='line'>  (let ((x (getf plist 'x))
+</span><span class='line'>        (y (getf plist 'y)))
+</span><span class='line'>    (setf (point-rho pos) (sqrt (+ (* x x) (* y y)))
+</span><span class='line'>          (point-theta pos) (atan y x))))
+</span><span class='line'> 
+</span><span class='line'>(defclass point ()
+</span><span class='line'>  ((rho :initform 0 :accessor point-rho)
+</span><span class='line'>   (theta :initform 0 :accessor point-theta)))
+</span><span class='line'> 
+</span><span class='line'>(defmethod point-x ((pos point))
+</span><span class='line'>  (with-slots (rho theta) pos (* rho (cos theta))))
+</span><span class='line'> 
+</span><span class='line'>(defmethod point-y ((pos point))
+</span><span class='line'>  (with-slots (rho theta) pos (* rho (sin theta))))</span></code></pre></td></tr></table></div></figure>
+
+
+<p>これは要するに、 <strong>update-instance-for-redefined-class</strong> を拡張して、極座標実装での値 <em>rho</em> と <em>theta</em> を直交座標実装の値から計算するものです。 <strong>update-instance-for-redefined-class</strong> を拡張した後、このコードはクラスを再定義して、その時存在する全てのインスタンスを新しいクラスのインスタンスに変換します<sup id="fnref:2"><a href="#fn:2" rel="footnote">2</a></sup>。
+そして最後に、二つのメソッド <strong>point-x</strong> と <strong>point-y</strong> を定義し、 point クラスの元のインターフェースを保ちます<sup id="fnref:3"><a href="#fn:3" rel="footnote">3</a></sup>。コードを走らせてから <em>*location*</em> の中身をインスペクトすると、次のようなものが見えるはずです:</p>
+
+<!-- http://malisper.me/wp-content/uploads/2015/07/ezgif.com-optimize-21.gif -->
+
+
+<p><img class="center" src="http://glider-gun.github.io/images/2015-12-22/ezgif.com-optimize-21.gif" width="600"></p>
+
+<p><em>*location*</em> は依然として同一のオブジェクトを指しているものの、今やそれは極座標実装になっています！ 正しく変換されたことを確かめるため、あなたはこのオブジェクトを与えて <strong>point-x</strong> 関数を呼び出し、 x 座標が同じままかどうか確かめることにしました:</p>
+
+<!-- http://malisper.me/wp-content/uploads/2015/07/ezgif.com-crop1.gif -->
+
+
+<p><img class="center" src="http://glider-gun.github.io/images/2015-12-22/ezgif.com-crop1.gif" width="600"></p>
+
+<p>驚くべきことに、クラスの実装を完全に置き換えたにもかかわらず、全てのコードは動作し続けます。もしあなたが24時間365日動き続けていなければならないサービス内でクラスの実装を変更したくて、しかもそれがたまたま Common Lisp で書かれていたなら、 <strong>update-instance</strong> を使うことを思い出してください。</p>
+
+<p>原文: <a href="http://malisper.me/2015/07/22/debugging-lisp-part-3-redefining-classes/">http://malisper.me/2015/07/22/debugging-lisp-part-3-redefining-classes/</a></p>
+<div class="footnotes">
+<hr/>
+<ol>
+<li id="fn:1">
+<p>MOPについてもっと学びたい方は、"The Art of the Metaobject Protocol"を手に取ってみてください。オブジェクト指向プログラミングを作った人であるアラン・ケイは、1997年のOOPSLAでの講演でこの本を「この10年で最も良い本」だと言いました。<a href="#fnref:1" rev="footnote">&#8617;</a></p></li>
+<li id="fn:2">
+<p>実際には、どの時点でupdate-instance-for-redefined-classが呼ばれるかは仕様では策定されていません。 保証されているのは、最初にインスタンス変数がアクセスされるまでに呼ばれるということだけです。<a href="#fnref:2" rev="footnote">&#8617;</a></p></li>
+<li id="fn:3">
+<p>本当にインターフェースを保存するためには initialize-instance などいくつか他の関数も定義し直す必要はあります。<a href="#fnref:3" rev="footnote">&#8617;</a></p></li>
+</ol>
+</div>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Debugging Lisp Part 2: インスペクト]]></title>

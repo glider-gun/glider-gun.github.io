@@ -5,7 +5,7 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>glider-gun's Blog</title>
+  <title>Debugging Lisp Part 2: インスペクト - glider-gun's Blog</title>
   <meta name="author" content="glider-gun">
 
   
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://glider-gun.github.io/">
+  <link rel="canonical" href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-2-insupekuto/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="glider-gun's Blog" type="application/atom+xml">
@@ -75,15 +75,12 @@
 </nav>
   <div id="main">
     <div id="content">
-      <div class="blog-index">
+      <div>
+<article class="hentry" role="article">
   
-  
-  
-    <article>
-      
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2015/12/22/debugging-lisp-part-2-insupekuto/">Debugging Lisp Part 2: インスペクト</a></h1>
+      <h1 class="entry-title">Debugging Lisp Part 2: インスペクト</h1>
     
     
       <p class="meta">
@@ -99,7 +96,7 @@
   </header>
 
 
-  <div class="entry-content"><p>このエントリーは、著者の許可をいただいて <a href="http://malisper.me/category/debugging-common-lisp/">http://malisper.me/category/debugging-common-lisp/</a> のCommon Lispのデバッグに関する連載を翻訳するものです。</p>
+<div class="entry-content"><p>このエントリーは、著者の許可をいただいて <a href="http://malisper.me/category/debugging-common-lisp/">http://malisper.me/category/debugging-common-lisp/</a> のCommon Lispのデバッグに関する連載を翻訳するものです。</p>
 
 <hr />
 
@@ -191,133 +188,52 @@ Slimeインスペクタは、オブジェクトをreplから直接操作する�
 </div>
 
 </div>
-  
-  
 
 
-    </article>
-  
-  
-    <article>
+  <footer>
+    <p class="meta">
       
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu/">Debugging Lisp Part 1: 再コンパイル</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-12-19T01:52:44+01:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>19</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>1:52 am</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>このエントリーは、著者 Michael Malis 氏の許可をいただき、Common Lispのデバッグに関する連載 <a href="http://malisper.me/category/debugging-common-lisp/">http://malisper.me/category/debugging-common-lisp/</a>  を翻訳するものです。</p>
-
-<p>もともとは<a href="http://qiita.com/advent-calendar/2015/lisp">Lisp Advent Calendar 2015</a>の第18日目とし、全部翻訳して載せようかと思っていたのですが、間に合わなかったため第1回をまず掲載します。クリスマスまでに残りを掲載する予定です。サイトを作りたてでコメント欄は後で設置するつもりですが、その前に何かありましたらredditのコメント欄などは多分見てますので遠慮なくお寄せください。</p>
-
-<hr />
-
-<p>このエントリーはCommon Lispのデバッギング、特にEmacs、Slime、SBCLを用いた場合に関する連載の第1回です。Common Lispを知らない人でも少なくとも追うことはでき、Common Lispのデバッガが提供するものがいかにパワフルかわかるはずです。このエントリー群はNathan Marzに書くよう頼まれたものです。彼はCommon Lispをデバッグする多くのツール群がクールだと考えたのです。</p>
-
-<p>Common Lispのデバッグを始めるに当たって最初に、あなたのLispで最適化の指定をする必要があります。Common Lispでは、コードのコンパイルにあたって何の項目を重要視すべきかを設定することができます。項目としてはたとえば実行速度、メモリ量、コンパイル速度、そしてデバッグがあります。以下のコードを走らせなければ、このエントリーで以下示すコードのほとんどは動作しません。</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>CL-USER&gt; (declaim (optimize (debug 3)))
-</span><span class='line'>NIL
-</span><span class='line'>
-</span><span class='line'>CL-USER&gt; (your-program)
-</span><span class='line'>...</span></code></pre></td></tr></table></div></figure>
-
-
-<p>デバッグを優先してコンパイルすることにしたので、実行時に色々なことができるようになりました。
-以下ではベテランのCommon Lisp開発者(トムとしましょう)に登場してもらい、彼がどのようにデバッグを行い、バグを含んだ関数を修正するかを示して行きます。トムの手元に、フィボナッチ関数を計算する次のようなコードがあるとします。</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>(defun fib (n)
-</span><span class='line'>  (if (&lt;= 0 n 1)
-</span><span class='line'>      (/ 1 0)
-</span><span class='line'>      (+ (fib (- n 1))
-</span><span class='line'>         (fib (- n 2)))))</span></code></pre></td></tr></table></div></figure>
-
-
-<p>このコードには問題が一つあります。正しくないということです！base caseでnを返すはずが、ゼロ除算を行ってしまいます。トムが10番目のフィボナッチ数を計算しようとするとデバッガウィンドウが現れます。エラーが通知されたからです。</p>
-
-<!-- http://malisper.me/wp-content/uploads/2015/07/ezgif.com-crop.gif -->
-
-
-<p><img class="center" src="/images/2015-12-19/ezgif.com-crop.gif" width="600"></p>
-
-<p>トムはデバッガに入ったことに気付いて、何がまずかったのか考えます。バグを見つけるため、トムは関数にブレークポイントを挿入することにしました<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>。Common Lispでは、ブレークポイントは関数として実装されており、"break"という名前です<sup id="fnref:2"><a href="#fn:2" rel="footnote">2</a></sup>。ブレークポイントを挿入するため、トムは <strong>fib</strong> の最初に <strong>break</strong> の呼び出しを追加しました(訳注: 関数定義のコードにカーソルを置いてC-c C-cを押すことでその関数を再コンパイルします)。ブレークポイントを追加したトムは、次に一つのフレームのところにカーソルを持って行ったのち、'r'キーを押しました。これでそのフレームから実行を再開(リスタート)できます。トムは <em>n</em> が 3 だったフレームをリスタートすることにしました。</p>
-
-<!-- http://malisper.me/wp-content/uploads/2015/07/ezgif.com-optimize.gif -->
-
-
-<p><img class="center" src="/images/2015-12-19/ezgif.com-optimize.gif" width="600"></p>
-
-<p>フレームをリスタートすることで、トムは要するにそのフレームまで時間を巻き戻すことができます。リスタートをすると、デバッガはトムが挿入したブレークポイントにただちにぶつかります。トムはそこから&rsquo;s'キーを押してプログラムを1ステップずつ実行します。最終的に彼は base case の実装が正しくないためにエラーが出ていることに気付きました。</p>
-
-<!-- http://malisper.me/wp-content/uploads/2015/07/ezgif.com-optimize-2.gif -->
-
-
-<p><img class="center" src="/images/2015-12-19/ezgif.com-optimize-2.gif" width="600"></p>
-
-<p>さて、エラーの原因がわかりました。ブレークポイントを挿入したときと同じようにして、トムがコードを修正します。base caseを <em>n</em> で置き換えて、先ほど挿入したブレークポイントを取り除きました。</p>
-
-<!-- http://malisper.me/wp-content/uploads/2015/07/ezgif.com-optimize-3.gif -->
-
-
-<p><img class="center" src="/images/2015-12-19/ezgif.com-optimize-3.gif" width="600"></p>
-
-<p>再コンパイルすると、トムはまたあるフレームからリスタートしました。先ほどコードをステップ実行していたところだったので、デバッガはフレームの中をステップ実行し始めました。トムが"0"(ゼロ)キーを押して step-continue という名のリスタートを呼ぶと、デバッガは通常実行に戻りました。このときトムはまだバグに遭遇する前のフレームからリスタートしたので、コードはあたかも最初からバグがなかったかのように走ります！</p>
-
-<!-- http://malisper.me/wp-content/uploads/2015/07/ezgif.com-crop-3.gif -->
-
-
-<p><img class="center" src="/images/2015-12-19/ezgif.com-crop-3.gif" width="600"></p>
-
-<p>まとめましょう。コードがエラーを通知すると、トムはデバッガに入っていることに気付きます。トムはコードにブレークポイントを挿入し、バグをつきとめるまでコードの振る舞いを追うことができます。トムがコードを修正したため、彼がフレームをリスタートするとコードは初めからバグがなかったかのように振る舞いました！</p>
-
-<p>実行時にコードを再コンパイルできるのは、Common Lispが備えるたくさんの驚くべき特徴のうちたったひとつにすぎません。次回は、デバッガ内からオブジェクトを調べたり変更するための、Slimeのインスペクタについてお話しします。</p>
-
-<p>原文: <a href="http://malisper.me/2015/07/07/debugging-lisp-part-1-recompilation/">http://malisper.me/2015/07/07/debugging-lisp-part-1-recompilation/</a></p>
-<div class="footnotes">
-<hr/>
-<ol>
-<li id="fn:1">
-<p>彼はすばらしいプログラマーかもしれませんが、エラーメッセージを読まないのです。<a href="#fnref:1" rev="footnote">&#8617;</a></p></li>
-<li id="fn:2">
-<p>breakはそれ自体がCommon Lispのリスタート(restart)という仕組みで実装されています。リスタートについては第4回で扱います。<a href="#fnref:2" rev="footnote">&#8617;</a></p></li>
-</ol>
-</div>
-
-</div>
-  
   
 
+<span class="byline author vcard">Posted by <span class="fn">glider-gun</span></span>
 
-    </article>
+      
+
+
+
+
+<time class='entry-date' datetime='2015-12-22T00:17:50+01:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>22</span><span class='date-suffix'>nd</span>, <span class='date-year'>2015</span></span> <span class='time'>12:17 am</span></time>
+      
+
+<span class="categories">
   
-  <div class="pagination">
+    <a class='category' href='/blog/categories/common-lisp/'>common lisp</a>, <a class='category' href='/blog/categories/debugging-lisp/'>debugging lisp</a>, <a class='category' href='/blog/categories/programming/'>programming</a>
+  
+</span>
+
+
+    </p>
     
-    <a href="/blog/archives">Blog Archives</a>
-    
-  </div>
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-2-insupekuto/" data-via="" data-counturl="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-2-insupekuto/" >Tweet</a>
+  
+  
+  
 </div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu/" title="Previous Post: Debugging Lisp Part 1: 再コンパイル">&laquo; Debugging Lisp Part 1: 再コンパイル</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
 <aside class="sidebar">
   
     <section>
@@ -341,6 +257,7 @@ Slimeインスペクタは、オブジェクトをreplから直接操作する�
 
   
 </aside>
+
 
     </div>
   </div>

@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
+    <loc>http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-2-insupekuto/</loc>
+    <lastmod>2015-12-22T00:17:50+01:00</lastmod>
+  </url>
+  <url>
     <loc>http://glider-gun.github.io/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu/</loc>
     <lastmod>2015-12-19T01:52:44+01:00</lastmod>
   </url>
@@ -9,5 +13,14 @@
   </url>
   <url>
     <loc>http://glider-gun.github.io/</loc>
+  </url>
+  <url>
+    <loc>http://glider-gun.github.io/blog/categories/debugging-lisp/</loc>
+  </url>
+  <url>
+    <loc>http://glider-gun.github.io/blog/categories/common-lisp/</loc>
+  </url>
+  <url>
+    <loc>http://glider-gun.github.io/blog/categories/programming/</loc>
   </url>
 </urlset>

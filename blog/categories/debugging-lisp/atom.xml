@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Debugging Lisp | glider-gun's Blog]]></title>
+  <link href="http://glider-gun.github.io/blog/categories/debugging-lisp/atom.xml" rel="self"/>
+  <link href="http://glider-gun.github.io/"/>
+  <updated>2015-12-22T00:33:23+01:00</updated>
+  <id>http://glider-gun.github.io/</id>
+  <author>
+    <name><![CDATA[glider-gun]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Debugging Lisp Part 2: インスペクト]]></title>
+    <link href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-2-insupekuto/"/>
+    <updated>2015-12-22T00:17:50+01:00</updated>
+    <id>http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-2-insupekuto</id>
+    <content type="html"><![CDATA[<p>このエントリーは、著者の許可をいただいて <a href="http://malisper.me/category/debugging-common-lisp/">http://malisper.me/category/debugging-common-lisp/</a> のCommon Lispのデバッグに関する連載を翻訳するものです。</p>
+
+<hr />
+
+<p>このエントリーは連載 Debugging Lispの第2回です。第1回は<a href="/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu">こちら</a>。</p>
+
+<p>このエントリーではCommon Lispのもう一つのデバッグツール、Slimeのインスペクタについて議論します。
+Slimeインスペクタは、オブジェクトをreplから直接操作することを可能にします。
+色々なことができ、例えばオブジェクトをクリックして内容をみることもできますし、オブジェクトをコピーアンドペーストして後の関数呼び出しで使うこともできます<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>。
+次のようなpointクラスがあるとしましょう:</p>
+
+<pre><code>(defclass point ()
+  ((x :accessor point-x :initarg :x :initform 0)
+   (y :accessor point-y :initarg :y :initform 0)))
+</code></pre>
+
+<p>このクラスのインスタンスを作るには次のようにします:
+<code>
+(make-instance 'point :x 10 :y 20)
+</code></p>
+
+<p>返されたオブジェクトを右クリックして"inspect"オプションを選ぶか、emacsのショートカット"C-v C-v TAB"を使うことでオブジェクトの中をのぞくことができます:</p>
+
+<!-- http://malisper.me/wp-content/uploads/2015/07/ezgif.com-optimize-5.gif -->
+
+
+<p><img class="center" src="/images/2015-12-22/ezgif.com-optimize-5.gif" width="600"></p>
+
+<p>全てのインスタンス変数の現在の値が表示されます。表示するだけでなく、変数の値を変更することも出来ます。これらがデバッガ内から、実行時に使えることが強力なのだということに注意してください。</p>
+
+<!-- http://malisper.me/wp-content/uploads/2015/07/ezgif.com-optimize-7.gif -->
+
+
+<p><img class="center" src="/images/2015-12-22/ezgif.com-optimize-7.gif" width="600"></p>
+
+<p>実際にオブジェクトの値が変更されたことを確認するには、このオブジェクトをコピーアンドペーストし、 <strong>point-x</strong> 関数に与えて呼び出すことができます。</p>
+
+<!-- http://malisper.me/wp-content/uploads/2015/07/ezgif.com-crop-5.gif -->
+
+
+<p><img class="center" src="/images/2015-12-22/ezgif.com-crop-5.gif" width="600"></p>
+
+<p>インスペクタに関してもう一つとてもクールなのは、Slimeのトレースダイアログです。トレースダイアログは普通のトレースに似ていますが、トレースされている関数が渡されたり返すオブジェクトがインスペクトできるようになっています。例えば、あなたが次のような末尾再帰最適化された関数 <strong>sum</strong> を書いているとしましょう。これはリストの中の全ての数を足し合わせます。</p>
+
+<pre><code>(defun sum (xs &amp;optional (acc 0))
+  (if (null xs)
+      acc
+      (sum (cdr xs) (+ (car xs) acc))))
+
+(sum '(1 2 3))
+=&gt; 6
+</code></pre>
+
+<p>関数 <strong>sum</strong> をトレースするかどうかは、ショートカット &ldquo;C-c M-t&rdquo; の後、関数の名前 &ldquo;<strong>sum</strong>&rdquo; を打つことで切り替えることができます。関数をトレースした後、"C-c T"でインタラクティブなトレースダイアログのバッファに入れます。"G"を押すことで情報を更新して一番最後のトレースを得ることができます。</p>
+
+<!-- http://malisper.me/wp-content/uploads/2015/07/ezgif.com-crop-4.gif -->
+
+
+<p><img class="center" src="/images/2015-12-22/ezgif.com-crop-4.gif" width="600"></p>
+
+<p>このトレースは普通のトレースと大体同じ見た目をしていますが、よい機能があります。上で述べたように、関数の全ての引数と返り値をインスペクトすることができるのです。見やすいようにトレースの枝の表示/非表示を切り替えることも出来ます。</p>
+
+<!-- http://malisper.me/wp-content/uploads/2015/07/ezgif.com-optimize-8.gif -->
+
+
+<p><img class="center" src="/images/2015-12-22/ezgif.com-optimize-8.gif" width="600"></p>
+
+<p>Slimeのトレースダイアログは、コードが多数のオブジェクトをやりとりしていて、自分がその中身について確信が持てないときに非常に有用です。これを使うだけであなたに必要な情報の全てを追ってくれるのです。</p>
+
+<p>SlimeのインスペクタはCommon Lispのデバッグツール群のもう一つの素晴らしい機能です。プログラムがクラッシュし、原因が分からないときに重宝します。他のデバッグツール群と組み合わされば最高です。</p>
+
+<p>原文: <a href="http://malisper.me/2015/07/14/debugging-lisp-part-2-inspecting/">http://malisper.me/2015/07/14/debugging-lisp-part-2-inspecting/</a></p>
+<div class="footnotes">
+<hr/>
+<ol>
+<li id="fn:1">
+<p>技術的にはこれはインスペクタの機能ではなく"Presentation"の機能です。インスペクタはオブジェクトの中を見る機能にあたります。<a href="#fnref:1" rev="footnote">&#8617;</a></p></li>
+</ol>
+</div>
+
+]]></content>
+  </entry>
+  
+</feed>

@@ -9,7 +9,7 @@
   <meta name="author" content="glider-gun">
 
   
-  <meta name="description" content="このエントリーは、著者の許可をいただいて http://malisper.me/category/debugging-common-lisp/ のCommon Lispのデバッグに関する連載を翻訳するものです。 このエントリーは、それだけで記事にするほど大きくはないような細かな機能についてです。 &hellip;">
+  <meta name="description" content="Common Lispのデバッグに関する連載 Debugging Lisp の翻訳がひとまず終わりましたので、まとめてリンクを張っておきます。Lisp Advent Calendar 2015の第18日目として第1回の記事へのリンクを張ってましたが、こっちに張り替えます。 Debugging &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +77,49 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/12/25/debugging-lisp-translation/">Debugging Lisp を翻訳しました</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-12-25T03:26:42+01:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>25</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>3:26 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Common Lispのデバッグに関する連載 <a href="http://malisper.me/category/debugging-common-lisp/">Debugging Lisp</a> の翻訳がひとまず終わりましたので、まとめてリンクを張っておきます。<a href="http://qiita.com/advent-calendar/2015/lisp">Lisp Advent Calendar 2015</a>の第18日目として第1回の記事へのリンクを張ってましたが、こっちに張り替えます。</p>
+
+<ul>
+<li><a href="/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu/">Debugging Lisp Part 1: 再コンパイル</a></li>
+<li><a href="/blog/2015/12/22/debugging-lisp-part-2-insupekuto/">Debugging Lisp Part 2: インスペクト</a></li>
+<li><a href="/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi/">Debugging Lisp Part 3: クラスの再定義</a></li>
+<li><a href="/blog/2015/12/25/debugging-lisp-part-4-restart/">Debugging Lisp Part 4: リスタート</a></li>
+<li><a href="/blog/2015/12/25/debugging-lisp-part-5-miscellaneous/">Debugging Lisp Part 5: その他こまごま</a></li>
+</ul>
+
+
+<p>つたない翻訳ではありますが、Common Lisp のデバッグ方法についてはあまり日本語で情報がなく、こういうのは必要なのではないかと思って訳してみた次第です。言語関係なく素晴らしい内容ですし。
+著者の Michael Malis 氏のサイト <a href="http://malisper.me/">http://malisper.me/</a> にはマクロについて他にも面白い記事があるので読める方は読むといいと思います。</p>
+
+<p>もともとは Qiita のエントリーにするつもりだったんですが、どうも gif アニメーション画像に対応していないようだったので急遽 github io を使ってページを作ることにしました。テーマとかまだいじるかもしれません。</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -803,7 +846,8 @@ Slimeインスペクタは、オブジェクトをreplから直接操作する�
 
   <div class="entry-content"><p>このエントリーは、著者 Michael Malis 氏の許可をいただき、Common Lispのデバッグに関する連載 <a href="http://malisper.me/category/debugging-common-lisp/">http://malisper.me/category/debugging-common-lisp/</a>  を翻訳するものです。</p>
 
-<p>もともとは<a href="http://qiita.com/advent-calendar/2015/lisp">Lisp Advent Calendar 2015</a>の第18日目とし、全部翻訳して載せようかと思っていたのですが、間に合わなかったため第1回をまず掲載します。クリスマスまでに残りを掲載する予定です。サイトを作りたてでコメント欄は後で設置するつもりですが、その前に何かありましたらredditのコメント欄などは多分見てますので遠慮なくお寄せください。</p>
+<!-- もともとは[Lisp Advent Calendar 2015](http://qiita.com/advent-calendar/2015/lisp)の第18日目とし、全部翻訳して載せようかと思っていたのですが、間に合わなかったため第1回をまず掲載します。クリスマスまでに残りを掲載する予定です。サイトを作りたてでコメント欄は後で設置するつもりですが、その前に何かありましたらredditのコメント欄などは多分見てますので遠慮なくお寄せください。 -->
+
 
 <hr />
 
@@ -908,6 +952,10 @@ Slimeインスペクタは、オブジェクトをreplから直接操作する�
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2015/12/25/debugging-lisp-translation/">Debugging Lisp を翻訳しました</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2015/12/25/debugging-lisp-part-5-miscellaneous/">Debugging Lisp Part 5: その他こまごま</a>
       </li>
     
@@ -921,10 +969,6 @@ Slimeインスペクタは、オブジェクトをreplから直接操作する�
     
       <li class="post">
         <a href="/blog/2015/12/22/debugging-lisp-part-2-insupekuto/">Debugging Lisp Part 2: インスペクト</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu/">Debugging Lisp Part 1: 再コンパイル</a>
       </li>
     
   </ul>

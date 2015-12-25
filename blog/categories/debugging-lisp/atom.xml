@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Debugging Lisp | glider-gun's Blog]]></title>
   <link href="http://glider-gun.github.io/blog/categories/debugging-lisp/atom.xml" rel="self"/>
   <link href="http://glider-gun.github.io/"/>
-  <updated>2015-12-25T03:53:47+01:00</updated>
+  <updated>2015-12-25T03:55:23+01:00</updated>
   <id>http://glider-gun.github.io/</id>
   <author>
     <name><![CDATA[glider-gun]]></name>
@@ -29,10 +29,18 @@
 </ul>
 
 
-<p>つたない翻訳ではありますが、Common Lisp のデバッグ方法についてはあまり日本語で情報がないので、こういうのもあるといいのではないかと思い自分の勉強を兼ねて訳してみた次第です。英語圏でもあんまりみたことない素晴らしい内容ですし。といいつつあんまり色々追っているわけでもないですが。
+<p>つたない翻訳ではありますが、Common Lisp のデバッグ方法についてはあまり日本語で情報がないので、こういうのもあるといいのではないかと思い自分の勉強を兼ねて訳してみた次第です。英語圏でもあんまりみたことない素晴らしい内容ですし<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>。
 翻訳元のサイト <a href="http://malisper.me/">http://malisper.me/</a> には主にマクロについて他にも面白い記事があるので読める方は読むといいと思います。</p>
 
 <p>ちなみにもともとは Qiita のエントリーにするつもりだったんですが、どうも gif アニメーション画像に対応していないようだったので急遽 github io を使ってページを作っています。テーマとかまだいじるかもしれません。とりあえず<a href="https://codeiq.jp/magazine/category/programminggirls/">はしれ！コード学園</a> のLispちゃん会には間にあわせたいという裏目標は達成出来たのでよかったです。</p>
+<div class="footnotes">
+<hr/>
+<ol>
+<li id="fn:1">
+<p>あんまり色々追っているわけでもないですが<a href="#fnref:1" rev="footnote">&#8617;</a></p></li>
+</ol>
+</div>
+
 ]]></content>
   </entry>
   

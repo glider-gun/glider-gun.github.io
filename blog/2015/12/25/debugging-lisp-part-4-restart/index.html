@@ -1,0 +1,527 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Debugging Lisp Part 4: リスタート - glider-gun's Blog</title>
+  <meta name="author" content="glider-gun">
+
+  
+  <meta name="description" content="このエントリーは、著者の許可をいただいて http://malisper.me/category/debugging-common-lisp/ のCommon Lispのデバッグに関する連載を翻訳するものです。 このエントリーは連載Debbugging Lispの第4回です。これまでに再コンパイル &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-4-restart/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="glider-gun's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-71590051-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">glider-gun's Blog</a></h1>
+  
+    <h2>何か書きます</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="glider-gun.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Debugging Lisp Part 4: リスタート</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-12-25T02:07:20+01:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>25</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>2:07 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>このエントリーは、著者の許可をいただいて <a href="http://malisper.me/category/debugging-common-lisp/">http://malisper.me/category/debugging-common-lisp/</a> のCommon Lispのデバッグに関する連載を翻訳するものです。</p>
+
+<hr />
+
+<p>このエントリーは連載Debbugging Lispの第4回です。これまでに<a href="/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu">再コンパイル</a>、<a href="/blog/2015/12/22/debugging-lisp-part-2-insupekuto">インスペクト</a>、<a href="/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi/">クラスの再定義</a>について扱いました。</p>
+
+<p>多くの言語において、エラーを扱う機能は2つに分かれています。いわゆる throw と catch です。 throw は何かが失敗したことを検知し、エラーを何らかの方法で通知します。このとき throw は発生した問題の情報を含んだ例外オブジェクトを作ります。一方 catch はこの例外オブジェクトを受け取って、エラーからの復帰を試みます。</p>
+
+<p>throw / catch の問題は、 throw が catch への無条件の goto のように振る舞うことです。このため、 throw が呼ばれた状況について、例外オブジェクトに含められなかった情報の全ては失われてしまいます。これは catch する側のコードが、エラーからの復帰のためにエラー発生時のため欲しい情報があったとき問題になります。</p>
+
+<p>たとえばあなたは、いくつかのファイルを取ってその中の数のリストをパースするようなライブラリを作っているとしましょう。その最初の関数 <strong>read-file</strong> は一つのファイルを読んで結果のリストを返します。2つ目の関数 <strong>read-files</strong> はファイルのリストを取って、各々のファイルの内容をさらにリストにして返します。以下はエラー処理を考えない場合のコードの例です:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>(defun read-file (file)
+</span><span class='line'>  (with-open-file (in file :direction :input)
+</span><span class='line'>    (loop for line = (read-line in nil in)
+</span><span class='line'>          until (eq in line)
+</span><span class='line'>          collect (parse-integer line))))
+</span><span class='line'> 
+</span><span class='line'>(defun read-files (files)
+</span><span class='line'>  (loop for file in files
+</span><span class='line'>        collect (read-file file)))</span></code></pre></td></tr></table></div></figure>
+
+
+<p>ライブラリをテストするために、あなたは手元にファイルを 2 つ持っています。1つ目の内容は 5, 10, 15, 20, 25 で、2つ目は 5, 10, 15, 20, a, 30, 40 です。ライブラリがエラーを正しく処理することを確かめるために、2つ目のファイルには &ldquo;a&rdquo; とだけ書かれた行を含めることにしたのです。現状では、 <strong>parse-integer</strong> がこの行でエラーを通知します。ライブラリのテストを簡単にするため、あなたは2つのファイルへのパスネームのリストを変数 <em>*files*</em> に保存しました。このライブラリをこの2つのファイルに対して走らせるとこうなります:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>(read-files *files*)
+</span><span class='line'> 
+</span><span class='line'> =&gt; ERROR</span></code></pre></td></tr></table></div></figure>
+
+
+<p>2つ目のファイルの &ldquo;a&rdquo; によってエラーが発生しました。あなたはライブラリの設計者として、このような状況で何が起こるべきか、決めなければいけません。使っている言語が catch / throw しか提供しない場合に取れる選択肢を見ていきましょう。</p>
+
+<p>1つ目の選択肢は、単にエラーを起こした項目を無視することです。これを行うためには、Common Lisp での catch 機能にあたる <strong>handler-case</strong> を使うことができます:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>(defun read-file (file)
+</span><span class='line'>  (with-open-file (in file :direction :input)
+</span><span class='line'>    (loop for line = (read-line in nil in)
+</span><span class='line'>          until (eq in line)
+</span><span class='line'>          when (handler-case (parse-integer line)
+</span><span class='line'>                 ;; C is the name being used to
+</span><span class='line'>                 ;; refer to the exception object.
+</span><span class='line'>                 (error (c)
+</span><span class='line'>                   (declare (ignore c))
+</span><span class='line'>                   nil))
+</span><span class='line'>          collect it)))
+</span><span class='line'> 
+</span><span class='line'>(read-files *files*)
+</span><span class='line'> 
+</span><span class='line'>=&gt; ((5 10 15 20 25) (5 10 15 20 30 40))</span></code></pre></td></tr></table></div></figure>
+
+
+<p>もう一つの選択肢は、ライブラリのユーザーが設定出来るようなスペシャル変数<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>を提供して、不正な値の代わりに用いられる値を設定出来るようにすることです:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>(defvar *malformed-value* nil)
+</span><span class='line'> 
+</span><span class='line'>(defun read-file (file)
+</span><span class='line'>  (with-open-file (in file :direction :input)
+</span><span class='line'>    (loop for line = (read-line in nil in)
+</span><span class='line'>          until (eq in line)
+</span><span class='line'>          when (handler-case (parse-integer line)
+</span><span class='line'>                 (error (c)
+</span><span class='line'>                   (declare (ignore c))
+</span><span class='line'>                   *malformed-value*))
+</span><span class='line'>          collect it)))
+</span><span class='line'> 
+</span><span class='line'>(let ((*malformed-value* :malformed))
+</span><span class='line'>  (read-files *files*))
+</span><span class='line'> 
+</span><span class='line'>=&gt; ((5 10 15 20 25) (5 10 15 20 :MALFORMED 30 40))</span></code></pre></td></tr></table></div></figure>
+
+
+<p>3つめの選択肢は、 <strong>read-files</strong> がエラーを catch して、不正な値の入ったファイル全体をスキップするようにすることです:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>(defun read-files (files)
+</span><span class='line'>  (loop for file in files
+</span><span class='line'>        when (handler-case (read-file file)
+</span><span class='line'>               (error (c)
+</span><span class='line'>                 (declare (ignore c))
+</span><span class='line'>                 nil))
+</span><span class='line'>        collect it))
+</span><span class='line'> 
+</span><span class='line'>(read-files *files*)
+</span><span class='line'> 
+</span><span class='line'>=&gt; ((5 10 15 20 25))</span></code></pre></td></tr></table></div></figure>
+
+
+<p>最後の選択肢は、ライブラリのユーザー自身に例外処理をまかせることです:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>(handler-case (read-files *files*)
+</span><span class='line'>  (error (c) (do-something)))</span></code></pre></td></tr></table></div></figure>
+
+
+<p>ユーザーにとっては、最後の選択肢はいくらか有用です。エラーをどう処理するかの柔軟性があるからです。こうすることの問題は、上で述べたように、ユーザにとってはエラーから正しく復帰するようにすることが難しいことです。単にエラーが発生したファイル1つだけをスキップしたい場合、簡単な方法はありません。エラー処理のコードが走るのは関数 <strong>read-files</strong> を去ったあとだからです。これは残りの読むべきファイルなど、状態に関する全ての情報が catch の時には失われているということを意味します。</p>
+
+<p>catch / throw についてのもう一つの問題は、上で上げた 4 つの選択肢のうち、あなたはたった 1 つしか選ぶことが出来ないということです。どの 1 つもほかの 4 つと競合してしまいます。これもやはり、 throw が goto のようにふるまうからです。一度どこへ飛ぶか決めたら、次にどうするかコントロールすることができません。エラーの処理をライブラリのユーザー自身にまかせることにしたなら、状態に関する情報が全て失われるために、ユーザーには簡単にエラーをうまく処理する方法がありません。</p>
+
+<p>ここでリスタートが登場します。Common Lisp では、 catch は2つの異なる部分に分かれています: ハンドラー handler とリスタート restart です。ハンドラーはライブラリのユーザーが束縛し、例外が発生したときに何が起こるべきかを決めるためのものです。リスタートはエラーから復帰する選択肢を提供するため、ライブラリ側で定義します。
+もしリスタートに対応した言語を使っていれば、先ほどの選択肢の最初の3つをリスタートとして実装することが出来ます。そしてユーザーがライブラリを使うときには、エラーの処理にそのうちどれを使いたいかを選ぶことが出来ます。以下が先ほどのライブラリを、先ほどの選択肢にそれぞれ対応する3つのリスタートが使えるよう再実装したものです:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>(defun ask (string)
+</span><span class='line'>  (princ string *query-io*)
+</span><span class='line'>  (read *query-io*))
+</span><span class='line'> 
+</span><span class='line'>(defun read-file (file)
+</span><span class='line'>  (with-open-file (in file :direction :input)
+</span><span class='line'>    (loop for line = (read-line in nil in)
+</span><span class='line'>          until (eq in line)
+</span><span class='line'>          when (restart-case (parse-integer line)
+</span><span class='line'>                 (use-value (value)
+</span><span class='line'>                   :report "Use a new value."
+</span><span class='line'>                   :interactive (lambda ()
+</span><span class='line'>                                  (list (ask "Value: ")))
+</span><span class='line'>                   value)
+</span><span class='line'>                 (skip-entry ()
+</span><span class='line'>                   :report "Skip the entry."
+</span><span class='line'>                   nil))
+</span><span class='line'>          collect it)))
+</span><span class='line'> 
+</span><span class='line'>(defun read-files (files)
+</span><span class='line'>  (loop for file in files
+</span><span class='line'>        when (restart-case (read-file file)
+</span><span class='line'>               (skip-file ()
+</span><span class='line'>                 :report "Skip the entire file."
+</span><span class='line'>                 nil))
+</span><span class='line'>        collect it))
+</span><span class='line'> 
+</span><span class='line'>;;; The three functions below are predefined
+</span><span class='line'>;;; handlers for the most common ways the user
+</span><span class='line'>;;; will interact with the restarts.
+</span><span class='line'>(defun skip-entry (c)
+</span><span class='line'>  (declare (ignore c))
+</span><span class='line'>  (invoke-restart 'skip-entry))
+</span><span class='line'> 
+</span><span class='line'>(defun skip-file  (c)
+</span><span class='line'>  (declare (ignore c))
+</span><span class='line'>  (invoke-restart 'skip-file))
+</span><span class='line'> 
+</span><span class='line'>(defun use-value-handler (value)
+</span><span class='line'>  (lambda (c)
+</span><span class='line'>    (declare (ignore c))
+</span><span class='line'>    (invoke-restart 'use-value value)))</span></code></pre></td></tr></table></div></figure>
+
+
+<p>リスタートはマクロ <strong>restart-case</strong> で定義され、関数 <strong>invoke-restart</strong> によって呼び出されます。いくらか簡略化して言うと、リスタートを呼び出すとのは、エラーが通知されたところからリスタートの本体(body)にジャンプするのと実際上同じことです。これは、リスタートが確立された時点でスタックに保存されていた全ての状態が、リスタートが呼び出された時点でまだ使えるということを意味します。これにより、ライブラリのユーザーに、エラー発生時にどうするかについてずっと粒度の細かいコントロールを与えることができます。</p>
+
+<p>エラー時に何が起こるべきかユーザーが決めるには、マクロ <strong>handler-bind</strong> を使うだけです。 <strong>handler-bind</strong> はエラーの種類と、その種類のエラーが通知されたときに呼び出すべきハンドラー(これは関数のはずです)を引数に取ります。ハンドラーはそのとき <strong>invoke-restart</strong> を呼ぶことで、ライブラリが持っているリスタートのうち一つを呼び出します。上のライブラリのコードには、リスタートひとつにつきひとつのハンドラー関数が用意してありますが、これはこれらが最もよくある種類のハンドラーだからです。以下はそれぞれのハンドラーが先ほどの2つのファイルに対して使われたときの例です:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>(handler-bind ((error #'skip-entry))
+</span><span class='line'>  (read-files files*))
+</span><span class='line'> 
+</span><span class='line'>=&gt; ((5 10 15 20 25) (5 10 15 20 30 40))
+</span><span class='line'> 
+</span><span class='line'>(handler-bind ((error #'skip-file))
+</span><span class='line'>  (read-files files*))
+</span><span class='line'> 
+</span><span class='line'>=&gt; ((5 10 15 20 25))
+</span><span class='line'> 
+</span><span class='line'>(handler-bind ((error (use-value-handler 0)))
+</span><span class='line'>  (read-files files*))
+</span><span class='line'> 
+</span><span class='line'>=&gt; ((5 10 15 20 25) (5 10 15 20 0 30 40))</span></code></pre></td></tr></table></div></figure>
+
+
+<p>リスタートが本当にクールなのは、ユーザーがハンドラーを設定していなかったときの振る舞いです。この場合ユーザーはSlimeデバッガに入ることになります。可能なリスタートのリストが提示されて、まるで最初からエラーがハンドリングされていたかのようにエラーを処理することができます！以下はユーザーがエラーをハンドルせず、そして実行中に (デバッガから) skip-entry リスタートを選んだ時の様子です:</p>
+
+<!-- http://malisper.me/wp-content/uploads/2015/08/ezgif.com-optimize-3.gif -->
+
+
+<p><img class="center" src="/images/2015-12-25/ezgif.com-optimize-3.gif" width="600"></p>
+
+<p>さらにクールなこととして、この"対話的リスタート"はブレークポイントを実装するのに使えます！第1回で書いたように、 Common Lisp はブレークポイントをエディタの機能としてではなく関数 &ldquo;<strong>break</strong>&rdquo; として提供しています。例えば次のような実装ができるでしょう:</p>
+
+<pre><code>(defun break (&amp;optional (format-control "Break")
+              &amp;rest format-arguments)
+   (with-simple-restart (continue "Return from BREAK.")
+     (let ((*debugger-hook* nil))
+       (invoke-debugger
+         (make-condition 'simple-condition
+           :format-control   format-control
+           :format-arguments format-arguments))))
+   nil)
+</code></pre>
+
+<p>このコードは &ldquo;continue&rdquo; というリスタートを用意してからエラーを通知することで動作します。つまり、<strong>break</strong>が呼ばれた直後、実行を続行するという選択肢つきのデバッガに入るわけです。この動作はブレークポイントそのものです。</p>
+
+<p>リスタートは Common Lisp のデバッギングにおける素晴らしい機能のひとつです。エラーが発生したとき、よりよい制御を可能にしてくれます。しかも、自分でそれをハンドルしなかったときには対話的にリスタートを選んでコードの実行を続けられるのです。</p>
+
+<p>原文: <a href="http://malisper.me/2015/08/05/debugging-lisp-part-4-restarts/">http://malisper.me/2015/08/05/debugging-lisp-part-4-restarts/</a></p>
+
+<!-- A dynamic variable is basically a global variable that can be shadowed. When a dynamic variable is shadowed, any reference to it refers to the new binding. Once execution leaves the form that shadowed the dynamic variable, the dynamic variable reverts back to its previous binding. -->
+
+<div class="footnotes">
+<hr/>
+<ol>
+<li id="fn:1">
+<p>ダイナミック変数とは、要するにシャドウ(shadow、覆い隠す)可能なグローバル変数です。ダイナミック変数がシャドウされると、変数に対するすべての参照は新しい値を指すようになります。変数をシャドウしたフォームから抜けた時点で、ダイナミック変数は以前の値に戻ります。<a href="#fnref:1" rev="footnote">&#8617;</a></p></li>
+</ol>
+</div>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">glider-gun</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2015-12-25T02:07:20+01:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>25</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>2:07 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/common-lisp/'>common lisp</a>, <a class='category' href='/blog/categories/debugging-lisp/'>debugging lisp</a>, <a class='category' href='/blog/categories/programming/'>programming</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-4-restart/" data-via="" data-counturl="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-4-restart/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi/" title="Previous Post: Debugging Lisp Part 3: クラスの再定義">&laquo; Debugging Lisp Part 3: クラスの再定義</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2015/12/25/debugging-lisp-part-5-miscellaneous/" title="Next Post: Debugging Lisp Part 5: その他こまごま">Debugging Lisp Part 5: その他こまごま &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2015/12/25/debugging-lisp-part-5-miscellaneous/">Debugging Lisp Part 5: その他こまごま</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/12/25/debugging-lisp-part-4-restart/">Debugging Lisp Part 4: リスタート</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi/">Debugging Lisp Part 3: クラスの再定義</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/12/22/debugging-lisp-part-2-insupekuto/">Debugging Lisp Part 2: インスペクト</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu/">Debugging Lisp Part 1: 再コンパイル</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - glider-gun -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

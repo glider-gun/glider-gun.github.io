@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Programming | glider-gun's Blog]]></title>
   <link href="http://glider-gun.github.io/blog/categories/programming/atom.xml" rel="self"/>
   <link href="http://glider-gun.github.io/"/>
-  <updated>2015-12-22T00:49:19+01:00</updated>
+  <updated>2015-12-25T03:10:22+01:00</updated>
   <id>http://glider-gun.github.io/</id>
   <author>
     <name><![CDATA[glider-gun]]></name>
@@ -12,6 +12,305 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Debugging Lisp Part 5: その他こまごま]]></title>
+    <link href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-5-miscellaneous/"/>
+    <updated>2015-12-25T02:12:41+01:00</updated>
+    <id>http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-5-miscellaneous</id>
+    <content type="html"><![CDATA[<p>このエントリーは、著者の許可をいただいて <a href="http://malisper.me/category/debugging-common-lisp/">http://malisper.me/category/debugging-common-lisp/</a> のCommon Lispのデバッグに関する連載を翻訳するものです。</p>
+
+<hr />
+
+<p>このエントリーは、それだけで記事にするほど大きくはないような細かな機能についてです。これまで<a href="/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu">再コンパイル</a>、<a href="/blog/2015/12/22/debugging-lisp-part-2-insupekuto">インスペクト</a>、<a href="/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi/">クラスの再定義</a>、<a href="/blog/2015/12/25/debugging-lisp-part-4-restart/">リスタート</a>を扱いました。</p>
+
+<p>あまり有名でない機能として、 SBCL の <strong>trace</strong> があります。SBCL のトレース機能はほとんどの Common Lisp 実装のそれに比べはるかに高機能です。SBCL の <strong>trace</strong> はいくつかのキーワード引数<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>を(訳注: Common Lispの仕様で決まっている他にも)追加で対応しています。例えば <strong>trace</strong> はキーワード変数 <em>:break</em> をとります。 <em>:break</em> の値として渡された式はトレース中の関数が呼ばれるたびに評価されます。そしてその式の値が真であるときにデバッガが呼び出されます。例えば次のようなフィボナッチ関数があったとしましょう:</p>
+
+<pre><code>(defun fib (n)
+  (if (&lt;= 0 n 1)
+      n
+      (+ (fib (- n 1))
+         (fib (- n 2)))))
+</code></pre>
+
+<p><strong>trace</strong> を使って、 <strong>fib</strong> が引数ゼロを渡されて呼び出されたときブレークするようにできます:</p>
+
+<!-- http://malisper.me/wp-content/uploads/2015/08/ezgif.com-optimize-4.gif -->
+
+
+<p><img class="center" src="/images/2015-12-25/ezgif.com-optimize-4.gif" width="600"></p>
+
+<p>式の中で関数に渡された引数を参照したいのでちょっとしたひねりが必要になっています。 他にも<strong>trace</strong> は <em>:break</em> の変種いくつかに対応しています。例えば <em>:break-after</em> はトレースされた関数が呼ばれる前ではなく呼ばれた後に式を評価するものです。 <em>:print</em> や <em>:print-after</em> は break に似ていますが、デバッガに入らず単に式の値をプリントします。<em>:print-after</em> を使って、例えば <strong>fib</strong> が実行から帰るたびに時刻(unix time)をプリントすることができます:</p>
+
+<!-- http://malisper.me/wp-content/uploads/2015/08/ezgif.com-optimize-6.gif -->
+
+
+<p><img class="center" src="/images/2015-12-25/ezgif.com-optimize-6.gif" width="600"></p>
+
+<p><strong>trace</strong> の取れる引数の完全なリストを見たければ、 SBCL マニュアルの<a href="http://www.sbcl.org/1.0/manual/Function-Tracing.html">このページ</a>を見てみてください。</p>
+
+<p>他にあまり知られていない機能は、相互参照(cross reference)コマンド群です。相互参照コマンドは、あるものが参照されているような場所をすべて見つけるコマンドです。これらのコマンドのキーバインディングはすべて C-c C-w で始まっています<sup id="fnref:2"><a href="#fn:2" rel="footnote">2</a></sup>。私がもっともよく使う相互参照コマンドは &ldquo;slime-who-calls&rdquo; (C-c C-w C-c にバインドされています)で、これは関数が呼ばれている全ての場所を表示します。次の図は <strong>scan</strong> 関数が <a href="http://weitz.de/cl-ppcre/">cl-ppcre</a> というライブラリの中のどこで呼ばれているか見つけて、その中をスクロールしているところです<sup id="fnref:3"><a href="#fn:3" rel="footnote">3</a></sup>:</p>
+
+<!-- http://malisper.me/wp-content/uploads/2015/08/ezgif.com-optimize-7.gif -->
+
+
+<p><img class="center" src="/images/2015-12-25/ezgif.com-optimize-7.gif" width="600"></p>
+
+<p>slime-who-calls は、関数がどのように使われることを想定しているか見るのに便利です。全ての用例を引っ張ってくることができるので、それを眺めるのです。slice-who-call にもいくらかの親戚がいます。 slime-who-macroexpands (C-c C-w RET) はマクロが使われている全ての場所を表示するもので、 slime-who-references (C-c C-w C-r) はそれの変数用バージョンです。</p>
+
+<p>もうひとつ大事な機能として、デバッガの中にいるとき、あるスタックに対応する関数のソースコードを引っ張ってくるものがあります。それを使うひとつの方法は、ソースが見たいスタックにカーソルをもっていって &lsquo;v&rsquo; キーを押すことです。もしくは M-p ( Alt キーと &lsquo;p&rsquo; キーを同時に押す) と M-n を使ってスタックフレーム中を上下に動くという方法もあります。C-p C-n のかわりにこの2つのコマンドを使うと、 Slime は自動的に対応するソースコードを表示します。次の図は cl-ppcre に正しくない正規表現を渡して、エラーでデバッガに入り、スタックの中を M-n でたどっているところです:</p>
+
+<!-- http://malisper.me/wp-content/uploads/2015/08/ezgif.com-optimize-9.gif -->
+
+
+<p><img class="center" src="/images/2015-12-25/ezgif.com-optimize-9.gif" width="600"></p>
+
+<p>そして IDE のコマンドで一番おなじみの機能、ソースへのジャンプです。最近私が話した人などは、IDE の機能は定義を簡単に探す機能しか使っていないと言っていました。Emacs で Slime を使うと、ほとんど何の定義でも &ldquo;M-.&rdquo; (Escキーの後にピリオドキー(訳注: あるいはAlt+ピリオドキー)) で飛ぶことができます。関数、変数、クラス、その他いろいろなもので動作します。総称関数 generic function の定義に飛ぼうとすると、それを実際に定義する全てのメソッド定義が表示されます。例えば <strong>create-matcher-aux</strong> (これは cl-ppcre ライブラリのほとんどの仕事を行っている関数です) の定義に飛ぼうとすると、図のようになります:</p>
+
+<!-- http://malisper.me/wp-content/uploads/2015/08/ezgif.com-optimize-8.gif -->
+
+
+<p><img class="center" src="/images/2015-12-25/ezgif.com-optimize-8.gif" width="600"></p>
+
+<p>元の場所に戻るには &ldquo;M-,&rdquo; を使います。</p>
+
+<p>そしてこれが、 Common Lisp のデバッグであなたが必要になるだろう知識のすべてです。</p>
+
+<p>原文: <a href="http://malisper.me/2015/08/19/debugging-lisp-part-5-miscellaneous/">http://malisper.me/2015/08/19/debugging-lisp-part-5-miscellaneous/</a></p>
+
+<!-- A keyword argument is an optional named argument. To use a keyword argument you pass in the the name of the argument, followed by the value. By using keyword arguments, a function can accept multiple optional arguments of which any subset can be used. -->
+
+
+
+
+<!-- C-c is pressed because that is the binding Slime uses. C-w is pressed for “who”, which is binding for all of the cross referencing commands. -->
+
+
+
+
+<!-- All of the places that use a macro whose expansion uses the function being cross referenced will also be pulled up. -->
+
+<div class="footnotes">
+<hr/>
+<ol>
+<li id="fn:1">
+<p>キーワード引数というのは名前がついたオプション引数です。キーワード引数を使うには、その名前と使いたい値を並べて関数に渡します。キーワード引数を使うと、関数は複数のオプション引数を持ったうえでその好きな一部分だけを受け取れるようになります。<a href="#fnref:1" rev="footnote">&#8617;</a></p></li>
+<li id="fn:2">
+<p>C-c は Slime 自体が使っているバインディングです。 C-w は &ldquo;who(誰が)&rdquo; の意味で、すべての相互参照コマンドがここに割り当てられています。<a href="#fnref:2" rev="footnote">&#8617;</a></p></li>
+<li id="fn:3">
+<p>マクロの使われている場所の中で、展開形の中でその関数が使われているような場所もすべて引っ張ってきます。<a href="#fnref:3" rev="footnote">&#8617;</a></p></li>
+</ol>
+</div>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Debugging Lisp Part 4: リスタート]]></title>
+    <link href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-4-restart/"/>
+    <updated>2015-12-25T02:07:20+01:00</updated>
+    <id>http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-4-restart</id>
+    <content type="html"><![CDATA[<p>このエントリーは、著者の許可をいただいて <a href="http://malisper.me/category/debugging-common-lisp/">http://malisper.me/category/debugging-common-lisp/</a> のCommon Lispのデバッグに関する連載を翻訳するものです。</p>
+
+<hr />
+
+<p>このエントリーは連載Debbugging Lispの第4回です。これまでに<a href="/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu">再コンパイル</a>、<a href="/blog/2015/12/22/debugging-lisp-part-2-insupekuto">インスペクト</a>、<a href="/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi/">クラスの再定義</a>について扱いました。</p>
+
+<p>多くの言語において、エラーを扱う機能は2つに分かれています。いわゆる throw と catch です。 throw は何かが失敗したことを検知し、エラーを何らかの方法で通知します。このとき throw は発生した問題の情報を含んだ例外オブジェクトを作ります。一方 catch はこの例外オブジェクトを受け取って、エラーからの復帰を試みます。</p>
+
+<p>throw / catch の問題は、 throw が catch への無条件の goto のように振る舞うことです。このため、 throw が呼ばれた状況について、例外オブジェクトに含められなかった情報の全ては失われてしまいます。これは catch する側のコードが、エラーからの復帰のためにエラー発生時のため欲しい情報があったとき問題になります。</p>
+
+<p>たとえばあなたは、いくつかのファイルを取ってその中の数のリストをパースするようなライブラリを作っているとしましょう。その最初の関数 <strong>read-file</strong> は一つのファイルを読んで結果のリストを返します。2つ目の関数 <strong>read-files</strong> はファイルのリストを取って、各々のファイルの内容をさらにリストにして返します。以下はエラー処理を考えない場合のコードの例です:</p>
+
+<pre><code>(defun read-file (file)
+  (with-open-file (in file :direction :input)
+    (loop for line = (read-line in nil in)
+          until (eq in line)
+          collect (parse-integer line))))
+
+(defun read-files (files)
+  (loop for file in files
+        collect (read-file file)))
+</code></pre>
+
+<p>ライブラリをテストするために、あなたは手元にファイルを 2 つ持っています。1つ目の内容は 5, 10, 15, 20, 25 で、2つ目は 5, 10, 15, 20, a, 30, 40 です。ライブラリがエラーを正しく処理することを確かめるために、2つ目のファイルには &ldquo;a&rdquo; とだけ書かれた行を含めることにしたのです。現状では、 <strong>parse-integer</strong> がこの行でエラーを通知します。ライブラリのテストを簡単にするため、あなたは2つのファイルへのパスネームのリストを変数 <em>*files*</em> に保存しました。このライブラリをこの2つのファイルに対して走らせるとこうなります:</p>
+
+<pre><code>(read-files *files*)
+
+ =&gt; ERROR
+</code></pre>
+
+<p>2つ目のファイルの &ldquo;a&rdquo; によってエラーが発生しました。あなたはライブラリの設計者として、このような状況で何が起こるべきか、決めなければいけません。使っている言語が catch / throw しか提供しない場合に取れる選択肢を見ていきましょう。</p>
+
+<p>1つ目の選択肢は、単にエラーを起こした項目を無視することです。これを行うためには、Common Lisp での catch 機能にあたる <strong>handler-case</strong> を使うことができます:</p>
+
+<pre><code>(defun read-file (file)
+  (with-open-file (in file :direction :input)
+    (loop for line = (read-line in nil in)
+          until (eq in line)
+          when (handler-case (parse-integer line)
+                 ;; C is the name being used to
+                 ;; refer to the exception object.
+                 (error (c)
+                   (declare (ignore c))
+                   nil))
+          collect it)))
+
+(read-files *files*)
+
+=&gt; ((5 10 15 20 25) (5 10 15 20 30 40))
+</code></pre>
+
+<p>もう一つの選択肢は、ライブラリのユーザーが設定出来るようなスペシャル変数<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>を提供して、不正な値の代わりに用いられる値を設定出来るようにすることです:</p>
+
+<pre><code>(defvar *malformed-value* nil)
+
+(defun read-file (file)
+  (with-open-file (in file :direction :input)
+    (loop for line = (read-line in nil in)
+          until (eq in line)
+          when (handler-case (parse-integer line)
+                 (error (c)
+                   (declare (ignore c))
+                   *malformed-value*))
+          collect it)))
+
+(let ((*malformed-value* :malformed))
+  (read-files *files*))
+
+=&gt; ((5 10 15 20 25) (5 10 15 20 :MALFORMED 30 40))
+</code></pre>
+
+<p>3つめの選択肢は、 <strong>read-files</strong> がエラーを catch して、不正な値の入ったファイル全体をスキップするようにすることです:</p>
+
+<pre><code>(defun read-files (files)
+  (loop for file in files
+        when (handler-case (read-file file)
+               (error (c)
+                 (declare (ignore c))
+                 nil))
+        collect it))
+
+(read-files *files*)
+
+=&gt; ((5 10 15 20 25))
+</code></pre>
+
+<p>最後の選択肢は、ライブラリのユーザー自身に例外処理をまかせることです:</p>
+
+<pre><code>(handler-case (read-files *files*)
+  (error (c) (do-something)))
+</code></pre>
+
+<p>ユーザーにとっては、最後の選択肢はいくらか有用です。エラーをどう処理するかの柔軟性があるからです。こうすることの問題は、上で述べたように、ユーザにとってはエラーから正しく復帰するようにすることが難しいことです。単にエラーが発生したファイル1つだけをスキップしたい場合、簡単な方法はありません。エラー処理のコードが走るのは関数 <strong>read-files</strong> を去ったあとだからです。これは残りの読むべきファイルなど、状態に関する全ての情報が catch の時には失われているということを意味します。</p>
+
+<p>catch / throw についてのもう一つの問題は、上で上げた 4 つの選択肢のうち、あなたはたった 1 つしか選ぶことが出来ないということです。どの 1 つもほかの 4 つと競合してしまいます。これもやはり、 throw が goto のようにふるまうからです。一度どこへ飛ぶか決めたら、次にどうするかコントロールすることができません。エラーの処理をライブラリのユーザー自身にまかせることにしたなら、状態に関する情報が全て失われるために、ユーザーには簡単にエラーをうまく処理する方法がありません。</p>
+
+<p>ここでリスタートが登場します。Common Lisp では、 catch は2つの異なる部分に分かれています: ハンドラー handler とリスタート restart です。ハンドラーはライブラリのユーザーが束縛し、例外が発生したときに何が起こるべきかを決めるためのものです。リスタートはエラーから復帰する選択肢を提供するため、ライブラリ側で定義します。
+もしリスタートに対応した言語を使っていれば、先ほどの選択肢の最初の3つをリスタートとして実装することが出来ます。そしてユーザーがライブラリを使うときには、エラーの処理にそのうちどれを使いたいかを選ぶことが出来ます。以下が先ほどのライブラリを、先ほどの選択肢にそれぞれ対応する3つのリスタートが使えるよう再実装したものです:</p>
+
+<pre><code>(defun ask (string)
+  (princ string *query-io*)
+  (read *query-io*))
+
+(defun read-file (file)
+  (with-open-file (in file :direction :input)
+    (loop for line = (read-line in nil in)
+          until (eq in line)
+          when (restart-case (parse-integer line)
+                 (use-value (value)
+                   :report "Use a new value."
+                   :interactive (lambda ()
+                                  (list (ask "Value: ")))
+                   value)
+                 (skip-entry ()
+                   :report "Skip the entry."
+                   nil))
+          collect it)))
+
+(defun read-files (files)
+  (loop for file in files
+        when (restart-case (read-file file)
+               (skip-file ()
+                 :report "Skip the entire file."
+                 nil))
+        collect it))
+
+;;; The three functions below are predefined
+;;; handlers for the most common ways the user
+;;; will interact with the restarts.
+(defun skip-entry (c)
+  (declare (ignore c))
+  (invoke-restart 'skip-entry))
+
+(defun skip-file  (c)
+  (declare (ignore c))
+  (invoke-restart 'skip-file))
+
+(defun use-value-handler (value)
+  (lambda (c)
+    (declare (ignore c))
+    (invoke-restart 'use-value value)))
+</code></pre>
+
+<p>リスタートはマクロ <strong>restart-case</strong> で定義され、関数 <strong>invoke-restart</strong> によって呼び出されます。いくらか簡略化して言うと、リスタートを呼び出すとのは、エラーが通知されたところからリスタートの本体(body)にジャンプするのと実際上同じことです。これは、リスタートが確立された時点でスタックに保存されていた全ての状態が、リスタートが呼び出された時点でまだ使えるということを意味します。これにより、ライブラリのユーザーに、エラー発生時にどうするかについてずっと粒度の細かいコントロールを与えることができます。</p>
+
+<p>エラー時に何が起こるべきかユーザーが決めるには、マクロ <strong>handler-bind</strong> を使うだけです。 <strong>handler-bind</strong> はエラーの種類と、その種類のエラーが通知されたときに呼び出すべきハンドラー(これは関数のはずです)を引数に取ります。ハンドラーはそのとき <strong>invoke-restart</strong> を呼ぶことで、ライブラリが持っているリスタートのうち一つを呼び出します。上のライブラリのコードには、リスタートひとつにつきひとつのハンドラー関数が用意してありますが、これはこれらが最もよくある種類のハンドラーだからです。以下はそれぞれのハンドラーが先ほどの2つのファイルに対して使われたときの例です:</p>
+
+<pre><code>(handler-bind ((error #'skip-entry))
+  (read-files files*))
+
+=&gt; ((5 10 15 20 25) (5 10 15 20 30 40))
+
+(handler-bind ((error #'skip-file))
+  (read-files files*))
+
+=&gt; ((5 10 15 20 25))
+
+(handler-bind ((error (use-value-handler 0)))
+  (read-files files*))
+
+=&gt; ((5 10 15 20 25) (5 10 15 20 0 30 40))
+</code></pre>
+
+<p>リスタートが本当にクールなのは、ユーザーがハンドラーを設定していなかったときの振る舞いです。この場合ユーザーはSlimeデバッガに入ることになります。可能なリスタートのリストが提示されて、まるで最初からエラーがハンドリングされていたかのようにエラーを処理することができます！以下はユーザーがエラーをハンドルせず、そして実行中に (デバッガから) skip-entry リスタートを選んだ時の様子です:</p>
+
+<!-- http://malisper.me/wp-content/uploads/2015/08/ezgif.com-optimize-3.gif -->
+
+
+<p><img class="center" src="/images/2015-12-25/ezgif.com-optimize-3.gif" width="600"></p>
+
+<p>さらにクールなこととして、この"対話的リスタート"はブレークポイントを実装するのに使えます！第1回で書いたように、 Common Lisp はブレークポイントをエディタの機能としてではなく関数 &ldquo;<strong>break</strong>&rdquo; として提供しています。例えば次のような実装ができるでしょう:</p>
+
+<pre><code>(defun break (&amp;optional (format-control "Break")
+              &amp;rest format-arguments)
+   (with-simple-restart (continue "Return from BREAK.")
+     (let ((*debugger-hook* nil))
+       (invoke-debugger
+         (make-condition 'simple-condition
+           :format-control   format-control
+           :format-arguments format-arguments))))
+   nil)
+</code></pre>
+
+<p>このコードは &ldquo;continue&rdquo; というリスタートを用意してからエラーを通知することで動作します。つまり、<strong>break</strong>が呼ばれた直後、実行を続行するという選択肢つきのデバッガに入るわけです。この動作はブレークポイントそのものです。</p>
+
+<p>リスタートは Common Lisp のデバッギングにおける素晴らしい機能のひとつです。エラーが発生したとき、よりよい制御を可能にしてくれます。しかも、自分でそれをハンドルしなかったときには対話的にリスタートを選んでコードの実行を続けられるのです。</p>
+
+<p>原文: <a href="http://malisper.me/2015/08/05/debugging-lisp-part-4-restarts/">http://malisper.me/2015/08/05/debugging-lisp-part-4-restarts/</a></p>
+
+<!-- A dynamic variable is basically a global variable that can be shadowed. When a dynamic variable is shadowed, any reference to it refers to the new binding. Once execution leaves the form that shadowed the dynamic variable, the dynamic variable reverts back to its previous binding. -->
+
+<div class="footnotes">
+<hr/>
+<ol>
+<li id="fn:1">
+<p>ダイナミック変数とは、要するにシャドウ(shadow、覆い隠す)可能なグローバル変数です。ダイナミック変数がシャドウされると、変数に対するすべての参照は新しい値を指すようになります。変数をシャドウしたフォームから抜けた時点で、ダイナミック変数は以前の値に戻ります。<a href="#fnref:1" rev="footnote">&#8617;</a></p></li>
+</ol>
+</div>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Debugging Lisp Part 2: インスペクト]]></title>

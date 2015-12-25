@@ -1,0 +1,303 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Debugging Lisp Part 5: その他こまごま - glider-gun's Blog</title>
+  <meta name="author" content="glider-gun">
+
+  
+  <meta name="description" content="このエントリーは、著者の許可をいただいて http://malisper.me/category/debugging-common-lisp/ のCommon Lispのデバッグに関する連載を翻訳するものです。 このエントリーは、それだけで記事にするほど大きくはないような細かな機能についてです。 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-5-miscellaneous/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="glider-gun's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-71590051-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">glider-gun's Blog</a></h1>
+  
+    <h2>何か書きます</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="glider-gun.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Debugging Lisp Part 5: その他こまごま</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-12-25T02:12:41+01:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>25</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>2:12 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>このエントリーは、著者の許可をいただいて <a href="http://malisper.me/category/debugging-common-lisp/">http://malisper.me/category/debugging-common-lisp/</a> のCommon Lispのデバッグに関する連載を翻訳するものです。</p>
+
+<hr />
+
+<p>このエントリーは、それだけで記事にするほど大きくはないような細かな機能についてです。これまで<a href="/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu">再コンパイル</a>、<a href="/blog/2015/12/22/debugging-lisp-part-2-insupekuto">インスペクト</a>、<a href="/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi/">クラスの再定義</a>、<a href="/blog/2015/12/25/debugging-lisp-part-4-restart/">リスタート</a>を扱いました。</p>
+
+<p>あまり有名でない機能として、 SBCL の <strong>trace</strong> があります。SBCL のトレース機能はほとんどの Common Lisp 実装のそれに比べはるかに高機能です。SBCL の <strong>trace</strong> はいくつかのキーワード引数<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>を(訳注: Common Lispの仕様で決まっている他にも)追加で対応しています。例えば <strong>trace</strong> はキーワード変数 <em>:break</em> をとります。 <em>:break</em> の値として渡された式はトレース中の関数が呼ばれるたびに評価されます。そしてその式の値が真であるときにデバッガが呼び出されます。例えば次のようなフィボナッチ関数があったとしましょう:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>(defun fib (n)
+</span><span class='line'>  (if (&lt;= 0 n 1)
+</span><span class='line'>      n
+</span><span class='line'>      (+ (fib (- n 1))
+</span><span class='line'>         (fib (- n 2)))))</span></code></pre></td></tr></table></div></figure>
+
+
+<p><strong>trace</strong> を使って、 <strong>fib</strong> が引数ゼロを渡されて呼び出されたときブレークするようにできます:</p>
+
+<!-- http://malisper.me/wp-content/uploads/2015/08/ezgif.com-optimize-4.gif -->
+
+
+<p><img class="center" src="/images/2015-12-25/ezgif.com-optimize-4.gif" width="600"></p>
+
+<p>式の中で関数に渡された引数を参照したいのでちょっとしたひねりが必要になっています。 他にも<strong>trace</strong> は <em>:break</em> の変種いくつかに対応しています。例えば <em>:break-after</em> はトレースされた関数が呼ばれる前ではなく呼ばれた後に式を評価するものです。 <em>:print</em> や <em>:print-after</em> は break に似ていますが、デバッガに入らず単に式の値をプリントします。<em>:print-after</em> を使って、例えば <strong>fib</strong> が実行から帰るたびに時刻(unix time)をプリントすることができます:</p>
+
+<!-- http://malisper.me/wp-content/uploads/2015/08/ezgif.com-optimize-6.gif -->
+
+
+<p><img class="center" src="/images/2015-12-25/ezgif.com-optimize-6.gif" width="600"></p>
+
+<p><strong>trace</strong> の取れる引数の完全なリストを見たければ、 SBCL マニュアルの<a href="http://www.sbcl.org/1.0/manual/Function-Tracing.html">このページ</a>を見てみてください。</p>
+
+<p>他にあまり知られていない機能は、相互参照(cross reference)コマンド群です。相互参照コマンドは、あるものが参照されているような場所をすべて見つけるコマンドです。これらのコマンドのキーバインディングはすべて C-c C-w で始まっています<sup id="fnref:2"><a href="#fn:2" rel="footnote">2</a></sup>。私がもっともよく使う相互参照コマンドは &ldquo;slime-who-calls&rdquo; (C-c C-w C-c にバインドされています)で、これは関数が呼ばれている全ての場所を表示します。次の図は <strong>scan</strong> 関数が <a href="http://weitz.de/cl-ppcre/">cl-ppcre</a> というライブラリの中のどこで呼ばれているか見つけて、その中をスクロールしているところです<sup id="fnref:3"><a href="#fn:3" rel="footnote">3</a></sup>:</p>
+
+<!-- http://malisper.me/wp-content/uploads/2015/08/ezgif.com-optimize-7.gif -->
+
+
+<p><img class="center" src="/images/2015-12-25/ezgif.com-optimize-7.gif" width="600"></p>
+
+<p>slime-who-calls は、関数がどのように使われることを想定しているか見るのに便利です。全ての用例を引っ張ってくることができるので、それを眺めるのです。slice-who-call にもいくらかの親戚がいます。 slime-who-macroexpands (C-c C-w RET) はマクロが使われている全ての場所を表示するもので、 slime-who-references (C-c C-w C-r) はそれの変数用バージョンです。</p>
+
+<p>もうひとつ大事な機能として、デバッガの中にいるとき、あるスタックに対応する関数のソースコードを引っ張ってくるものがあります。それを使うひとつの方法は、ソースが見たいスタックにカーソルをもっていって &lsquo;v&rsquo; キーを押すことです。もしくは M-p ( Alt キーと &lsquo;p&rsquo; キーを同時に押す) と M-n を使ってスタックフレーム中を上下に動くという方法もあります。C-p C-n のかわりにこの2つのコマンドを使うと、 Slime は自動的に対応するソースコードを表示します。次の図は cl-ppcre に正しくない正規表現を渡して、エラーでデバッガに入り、スタックの中を M-n でたどっているところです:</p>
+
+<!-- http://malisper.me/wp-content/uploads/2015/08/ezgif.com-optimize-9.gif -->
+
+
+<p><img class="center" src="/images/2015-12-25/ezgif.com-optimize-9.gif" width="600"></p>
+
+<p>そして IDE のコマンドで一番おなじみの機能、ソースへのジャンプです。最近私が話した人などは、IDE の機能は定義を簡単に探す機能しか使っていないと言っていました。Emacs で Slime を使うと、ほとんど何の定義でも &ldquo;M-.&rdquo; (Escキーの後にピリオドキー(訳注: あるいはAlt+ピリオドキー)) で飛ぶことができます。関数、変数、クラス、その他いろいろなもので動作します。総称関数 generic function の定義に飛ぼうとすると、それを実際に定義する全てのメソッド定義が表示されます。例えば <strong>create-matcher-aux</strong> (これは cl-ppcre ライブラリのほとんどの仕事を行っている関数です) の定義に飛ぼうとすると、図のようになります:</p>
+
+<!-- http://malisper.me/wp-content/uploads/2015/08/ezgif.com-optimize-8.gif -->
+
+
+<p><img class="center" src="/images/2015-12-25/ezgif.com-optimize-8.gif" width="600"></p>
+
+<p>元の場所に戻るには &ldquo;M-,&rdquo; を使います。</p>
+
+<p>そしてこれが、 Common Lisp のデバッグであなたが必要になるだろう知識のすべてです。</p>
+
+<p>原文: <a href="http://malisper.me/2015/08/19/debugging-lisp-part-5-miscellaneous/">http://malisper.me/2015/08/19/debugging-lisp-part-5-miscellaneous/</a></p>
+
+<!-- A keyword argument is an optional named argument. To use a keyword argument you pass in the the name of the argument, followed by the value. By using keyword arguments, a function can accept multiple optional arguments of which any subset can be used. -->
+
+
+
+
+<!-- C-c is pressed because that is the binding Slime uses. C-w is pressed for “who”, which is binding for all of the cross referencing commands. -->
+
+
+
+
+<!-- All of the places that use a macro whose expansion uses the function being cross referenced will also be pulled up. -->
+
+<div class="footnotes">
+<hr/>
+<ol>
+<li id="fn:1">
+<p>キーワード引数というのは名前がついたオプション引数です。キーワード引数を使うには、その名前と使いたい値を並べて関数に渡します。キーワード引数を使うと、関数は複数のオプション引数を持ったうえでその好きな一部分だけを受け取れるようになります。<a href="#fnref:1" rev="footnote">&#8617;</a></p></li>
+<li id="fn:2">
+<p>C-c は Slime 自体が使っているバインディングです。 C-w は &ldquo;who(誰が)&rdquo; の意味で、すべての相互参照コマンドがここに割り当てられています。<a href="#fnref:2" rev="footnote">&#8617;</a></p></li>
+<li id="fn:3">
+<p>マクロの使われている場所の中で、展開形の中でその関数が使われているような場所もすべて引っ張ってきます。<a href="#fnref:3" rev="footnote">&#8617;</a></p></li>
+</ol>
+</div>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">glider-gun</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2015-12-25T02:12:41+01:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>25</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>2:12 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/common-lisp/'>common lisp</a>, <a class='category' href='/blog/categories/debugging-lisp/'>debugging lisp</a>, <a class='category' href='/blog/categories/programming/'>programming</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-5-miscellaneous/" data-via="" data-counturl="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-5-miscellaneous/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/12/25/debugging-lisp-part-4-restart/" title="Previous Post: Debugging Lisp Part 4: リスタート">&laquo; Debugging Lisp Part 4: リスタート</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2015/12/25/debugging-lisp-part-5-miscellaneous/">Debugging Lisp Part 5: その他こまごま</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/12/25/debugging-lisp-part-4-restart/">Debugging Lisp Part 4: リスタート</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi/">Debugging Lisp Part 3: クラスの再定義</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/12/22/debugging-lisp-part-2-insupekuto/">Debugging Lisp Part 2: インスペクト</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu/">Debugging Lisp Part 1: 再コンパイル</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - glider-gun -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

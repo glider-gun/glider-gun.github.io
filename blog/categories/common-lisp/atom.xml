@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Common Lisp | glider-gun's Blog]]></title>
   <link href="http://glider-gun.github.io/blog/categories/common-lisp/atom.xml" rel="self"/>
   <link href="http://glider-gun.github.io/"/>
-  <updated>2015-12-25T19:44:45+01:00</updated>
+  <updated>2015-12-25T19:45:43+01:00</updated>
   <id>http://glider-gun.github.io/</id>
   <author>
     <name><![CDATA[glider-gun]]></name>
@@ -124,7 +124,7 @@ exec ros -Q -- $0 &quot;$@&quot;
 
 <p>のようにして起動します。</p>
 
-<p>機能としてはhjklで移動してqで終了するだけです。
+<p>機能としてはhjklか矢印キーで移動してqで終了するだけです。
 文字幅を取得するのに cffi で wcwidth 関数を呼んでいます。</p>
 ]]></content>
   </entry>

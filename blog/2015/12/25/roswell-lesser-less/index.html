@@ -5,11 +5,12 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Debugging Lisp を翻訳しました - glider-gun's Blog</title>
+  <title>Roswellでlessもどきを作ってみる - glider-gun's Blog</title>
   <meta name="author" content="glider-gun">
 
   
-  <meta name="description" content="Common Lispのデバッグに関する Michael Malis 氏の連載 Debugging Lisp の翻訳がひとまず終わりましたので、まとめてリンクを張っておきます。Lisp Advent Calendar 2015の第18日目として第1回の記事へのリンクを張ってましたが、 &hellip;">
+  <meta name="description" content="CUIプログラムを作ろうとする時よく使われるライブラリとしてncursesというのがあります。
+Common Lispバインディングとしてはcl-cursesというのがあります。 練習として less コマンドのようなものを作ってみました。roswellスクリプトです。 #!/bin/sh &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +19,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-translation/">
+  <link rel="canonical" href="http://glider-gun.github.io/blog/2015/12/25/roswell-lesser-less/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="glider-gun's Blog" type="application/atom+xml">
@@ -80,7 +81,7 @@
   
   <header>
     
-      <h1 class="entry-title">Debugging Lisp を翻訳しました</h1>
+      <h1 class="entry-title">Roswellでlessもどきを作ってみる</h1>
     
     
       <p class="meta">
@@ -89,36 +90,124 @@
 
 
 
-<time class='entry-date' datetime='2015-12-25T03:26:42+01:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>25</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>3:26 am</span></time>
+<time class='entry-date' datetime='2015-12-25T19:35:23+01:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>25</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>7:35 pm</span></time>
         
       </p>
     
   </header>
 
 
-<div class="entry-content"><p>Common Lispのデバッグに関する Michael Malis 氏の連載 <a href="http://malisper.me/category/debugging-common-lisp/">Debugging Lisp</a> の翻訳がひとまず終わりましたので、まとめてリンクを張っておきます。<a href="http://qiita.com/advent-calendar/2015/lisp">Lisp Advent Calendar 2015</a>の第18日目として第1回の記事へのリンクを張ってましたが、こっちに張り替えます。</p>
+<div class="entry-content"><p>CUIプログラムを作ろうとする時よく使われるライブラリとしてncursesというのがあります。
+Common Lispバインディングとしてはcl-cursesというのがあります。</p>
 
-<ul>
-<li><a href="/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu/">Debugging Lisp Part 1: 再コンパイル</a></li>
-<li><a href="/blog/2015/12/22/debugging-lisp-part-2-insupekuto/">Debugging Lisp Part 2: インスペクト</a></li>
-<li><a href="/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi/">Debugging Lisp Part 3: クラスの再定義</a></li>
-<li><a href="/blog/2015/12/25/debugging-lisp-part-4-restart/">Debugging Lisp Part 4: リスタート</a></li>
-<li><a href="/blog/2015/12/25/debugging-lisp-part-5-miscellaneous/">Debugging Lisp Part 5: その他こまごま</a></li>
-</ul>
+<p>練習として less コマンドのようなものを作ってみました。roswellスクリプトです。</p>
+
+<div><script src='https://gist.github.com/f93cb4471052cf6a0993.js?file=less.ros'></script>
+<noscript><pre><code>#!/bin/sh
+#|-*- mode:lisp -*-|#
+#|
+exec ros -Q -- $0 &quot;$@&quot;
+|#
+(ql:quickload :cl-charms :silent t)
+
+(defun read-file (fname)
+  &quot;return lines in fname&quot;
+  (with-open-file (s fname)
+    (loop for l = (read-line s nil nil)
+       while l collect l)))
+
+(defun char-width (c w)
+  (cond ((char-equal c #\tab)
+     (* (ceiling (1+ w) charms/ll:*tabsize*) charms/ll:*tabsize*))
+    (t (+ w
+          (cffi:foreign-funcall &quot;wcwidth&quot; :int (char-code c) :int)))))
+
+(defun string-width (str)
+  (loop for c across str
+     with width = 0
+     do (setf width (char-width c width))
+     finally (return width)))
+
+(defun main (&amp;rest argv)
+  (declare (ignorable argv))
+  (let*
+      ((fname (car argv))
+       (lines (read-file fname))
+       (minrow 0)
+       (mincol 0)
+       scr
+       pad
+       pad-width
+       pad-height)
+
+    ;; initialize screen and pad
+    (setf scr (charms/ll:initscr)
+      pad-height (length lines)
+      pad-width (loop for l in lines
+               maximize (string-width l))
+      pad (charms/ll:newpad pad-height pad-width))
+
+    (charms/ll:cbreak)          ; get key input immediately,
+                    ; but 
+    (charms/ll:noecho)          ; don&#39;t display key inputted from user
+    (charms/ll:keypad pad 1)        ; accept special keys like arrow keys
+    (charms/ll:curs-set 0)      ; don&#39;t show cursor
+
+    ;; initialize pad contents
+    (loop for l in lines
+       for y from 0
+       do (charms::check-status (charms/ll:mvwaddstr pad y 0 l)))
+
+    ;; draw pad
+    (charms/ll:wclear scr)
+    (charms::check-status
+     (charms/ll:prefresh pad minrow mincol
+             0 0
+             (1- charms/ll:*LINES*) (1- charms/ll:*COLS*)))
+
+    ;; main loop
+    (loop named loop for k = (charms/ll:wgetch pad)
+       do (cond ((= k (char-code #\q))
+         (return-from loop))
+        ((= k (char-code #\j))
+         (incf minrow))
+        ((= k (char-code #\k))
+         (decf minrow))
+        ((= k (char-code #\h))
+         (decf mincol))
+        ((= k (char-code #\l))
+         (incf mincol))
+        ((= k charms/ll:key_down)
+         (incf minrow))
+        ((= k charms/ll:key_up)
+         (decf minrow))
+        ((= k charms/ll:key_left)
+         (decf mincol))
+        ((= k charms/ll:key_right)
+         (incf mincol))
+        (t
+         ;; (format t &quot;[~A ~C ~:C]~%&quot; k (code-char k) (code-char k))
+         ;; (finish-output)
+         ))
+       do (charms/ll:wclear scr)
+       do (charms/ll:wrefresh scr)
+       do (charms/ll:prefresh pad minrow mincol
+                  0 0
+                  (1- charms/ll:*LINES*) (1- charms/ll:*COLS*)))
+    (charms/ll:endwin)))
+</code></pre></noscript></div>
 
 
-<p>つたない翻訳ではありますが、Common Lisp のデバッグ方法についてはあまり日本語で情報がないので、こういうのもあるといいのではないかと思い自分の勉強を兼ねて訳してみた次第です。英語圏でもあんまりみたことない素晴らしい内容ですし<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>。
-翻訳元のサイト <a href="http://malisper.me/">http://malisper.me/</a> には主にマクロについて他にも面白い記事があるので読める方は読むといいと思います。</p>
 
-<p>ちなみにもともとは Qiita のエントリーにするつもりだったんですが、どうも Qiita が gif アニメーション画像に対応していないようだったので急遽 github io を使ってページを作っています。テーマとかまだいじるかもしれません。とりあえず<a href="https://codeiq.jp/magazine/category/programminggirls/">はしれ！コード学園</a> のLispちゃん会には間にあわせたいという裏目標は達成出来たのでよかったです。</p>
-<div class="footnotes">
-<hr/>
-<ol>
-<li id="fn:1">
-<p>あんまり色々追っているわけでもないですが<a href="#fnref:1" rev="footnote">&#8617;</a></p></li>
-</ol>
-</div>
 
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>./less.ros hoge.txt</span></code></pre></td></tr></table></div></figure>
+
+
+<p>のようにして起動します。</p>
+
+<p>機能としてはhjklで移動してqで終了するだけです。
+文字幅を取得するのに cffi で wcwidth 関数を呼んでいます。</p>
 </div>
 
 
@@ -134,12 +223,12 @@
 
 
 
-<time class='entry-date' datetime='2015-12-25T03:26:42+01:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>25</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>3:26 am</span></time>
+<time class='entry-date' datetime='2015-12-25T19:35:23+01:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>25</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>7:35 pm</span></time>
       
 
 <span class="categories">
   
-    <a class='category' href='/blog/categories/common-lisp/'>common lisp</a>, <a class='category' href='/blog/categories/debugging-lisp/'>debugging lisp</a>, <a class='category' href='/blog/categories/programming/'>programming</a>
+    <a class='category' href='/blog/categories/common-lisp/'>common lisp</a>, <a class='category' href='/blog/categories/programming/'>programming</a>
   
 </span>
 
@@ -148,7 +237,7 @@
     
       <div class="sharing">
   
-  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-translation/" data-via="" data-counturl="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-translation/" >Tweet</a>
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://glider-gun.github.io/blog/2015/12/25/roswell-lesser-less/" data-via="" data-counturl="http://glider-gun.github.io/blog/2015/12/25/roswell-lesser-less/" >Tweet</a>
   
   
   
@@ -157,10 +246,8 @@
     
     <p class="meta">
       
-        <a class="basic-alignment left" href="/blog/2015/12/25/debugging-lisp-part-5-miscellaneous/" title="Previous Post: Debugging Lisp Part 5: その他こまごま">&laquo; Debugging Lisp Part 5: その他こまごま</a>
+        <a class="basic-alignment left" href="/blog/2015/12/25/debugging-lisp-translation/" title="Previous Post: Debugging Lisp を翻訳しました">&laquo; Debugging Lisp を翻訳しました</a>
       
-      
-        <a class="basic-alignment right" href="/blog/2015/12/25/roswell-lesser-less/" title="Next Post: roswellでlessもどきを作ってみる">roswellでlessもどきを作ってみる &raquo;</a>
       
     </p>
   </footer>
@@ -259,8 +346,8 @@
       
         
         // var disqus_developer = 1;
-        var disqus_identifier = 'http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-translation/';
-        var disqus_url = 'http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-translation/';
+        var disqus_identifier = 'http://glider-gun.github.io/blog/2015/12/25/roswell-lesser-less/';
+        var disqus_url = 'http://glider-gun.github.io/blog/2015/12/25/roswell-lesser-less/';
         var disqus_script = 'embed.js';
       
     (function () {

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Programming | glider-gun's Blog]]></title>
   <link href="http://glider-gun.github.io/blog/categories/programming/atom.xml" rel="self"/>
   <link href="http://glider-gun.github.io/"/>
-  <updated>2015-12-25T04:13:56+01:00</updated>
+  <updated>2015-12-25T19:43:39+01:00</updated>
   <id>http://glider-gun.github.io/</id>
   <author>
     <name><![CDATA[glider-gun]]></name>
@@ -12,6 +12,122 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Roswellでlessもどきを作ってみる]]></title>
+    <link href="http://glider-gun.github.io/blog/2015/12/25/roswell-lesser-less/"/>
+    <updated>2015-12-25T19:35:23+01:00</updated>
+    <id>http://glider-gun.github.io/blog/2015/12/25/roswell-lesser-less</id>
+    <content type="html"><![CDATA[<p>CUIプログラムを作ろうとする時よく使われるライブラリとしてncursesというのがあります。
+Common Lispバインディングとしてはcl-cursesというのがあります。</p>
+
+<p>練習として less コマンドのようなものを作ってみました。roswellスクリプトです。</p>
+
+<p><div><script src='https://gist.github.com/f93cb4471052cf6a0993.js?file=less.ros'></script>
+<noscript><pre><code>#!/bin/sh
+#|-*- mode:lisp -*-|#
+#|
+exec ros -Q -- $0 &quot;$@&quot;
+|#
+(ql:quickload :cl-charms :silent t)
+
+(defun read-file (fname)
+  &quot;return lines in fname&quot;
+  (with-open-file (s fname)
+    (loop for l = (read-line s nil nil)
+       while l collect l)))
+
+(defun char-width (c w)
+  (cond ((char-equal c #\tab)
+	 (* (ceiling (1+ w) charms/ll:*tabsize*) charms/ll:*tabsize*))
+	(t (+ w
+	      (cffi:foreign-funcall &quot;wcwidth&quot; :int (char-code c) :int)))))
+
+(defun string-width (str)
+  (loop for c across str
+     with width = 0
+     do (setf width (char-width c width))
+     finally (return width)))
+
+(defun main (&amp;rest argv)
+  (declare (ignorable argv))
+  (let*
+      ((fname (car argv))
+       (lines (read-file fname))
+       (minrow 0)
+       (mincol 0)
+       scr
+       pad
+       pad-width
+       pad-height)
+
+    ;; initialize screen and pad
+    (setf scr (charms/ll:initscr)
+	  pad-height (length lines)
+	  pad-width (loop for l in lines
+		       maximize (string-width l))
+	  pad (charms/ll:newpad pad-height pad-width))
+
+    (charms/ll:cbreak)			; get key input immediately,
+					; but 
+    (charms/ll:noecho)			; don&#39;t display key inputted from user
+    (charms/ll:keypad pad 1)		; accept special keys like arrow keys
+    (charms/ll:curs-set 0)		; don&#39;t show cursor
+
+    ;; initialize pad contents
+    (loop for l in lines
+       for y from 0
+       do (charms::check-status (charms/ll:mvwaddstr pad y 0 l)))
+
+    ;; draw pad
+    (charms/ll:wclear scr)
+    (charms::check-status
+     (charms/ll:prefresh pad minrow mincol
+			 0 0
+			 (1- charms/ll:*LINES*) (1- charms/ll:*COLS*)))
+
+    ;; main loop
+    (loop named loop for k = (charms/ll:wgetch pad)
+       do (cond ((= k (char-code #\q))
+		 (return-from loop))
+		((= k (char-code #\j))
+		 (incf minrow))
+		((= k (char-code #\k))
+		 (decf minrow))
+		((= k (char-code #\h))
+		 (decf mincol))
+		((= k (char-code #\l))
+		 (incf mincol))
+		((= k charms/ll:key_down)
+		 (incf minrow))
+		((= k charms/ll:key_up)
+		 (decf minrow))
+		((= k charms/ll:key_left)
+		 (decf mincol))
+		((= k charms/ll:key_right)
+		 (incf mincol))
+		(t
+		 ;; (format t &quot;[~A ~C ~:C]~%&quot; k (code-char k) (code-char k))
+		 ;; (finish-output)
+		 ))
+       do (charms/ll:wclear scr)
+       do (charms/ll:wrefresh scr)
+       do (charms/ll:prefresh pad minrow mincol
+			      0 0
+			      (1- charms/ll:*LINES*) (1- charms/ll:*COLS*)))
+    (charms/ll:endwin)))
+</code></pre></noscript></div>
+</p>
+
+<pre><code>./less.ros hoge.txt
+</code></pre>
+
+<p>のようにして起動します。</p>
+
+<p>機能としてはhjklで移動してqで終了するだけです。
+文字幅を取得するのに cffi で wcwidth 関数を呼んでいます。</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Debugging Lisp を翻訳しました]]></title>

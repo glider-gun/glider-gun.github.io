@@ -4,7 +4,7 @@
   <title><![CDATA[glider-gun's Blog]]></title>
   <link href="http://glider-gun.github.io/atom.xml" rel="self"/>
   <link href="http://glider-gun.github.io/"/>
-  <updated>2015-12-25T19:45:43+01:00</updated>
+  <updated>2015-12-25T19:47:16+01:00</updated>
   <id>http://glider-gun.github.io/</id>
   <author>
     <name><![CDATA[glider-gun]]></name>
@@ -19,9 +19,18 @@
     <updated>2015-12-25T19:35:23+01:00</updated>
     <id>http://glider-gun.github.io/blog/2015/12/25/roswell-lesser-less</id>
     <content type="html"><![CDATA[<p>CUIプログラムを作ろうとする時よく使われるライブラリとしてncursesというのがあります。
-Common Lispバインディングとしてはcl-cursesというのがあります。</p>
+それのCommon Lispバインディングとしては<a href="https://github.com/HiTECNOLOGYs/cl-charms">cl-charms</a>というのがあります。</p>
 
-<p>練習として less コマンドのようなものを作ってみました。roswellスクリプトです。</p>
+<p>練習として less コマンドのようなものを作ってみました。<a href="https://github.com/snmsts/roswell">roswell</a>スクリプトです。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>./less.ros hoge.txt</span></code></pre></td></tr></table></div></figure>
+
+
+<p>のようにして起動します。</p>
+
+<p>機能としてはhjklか矢印キーで移動してqで終了するだけです。
+文字幅を取得するのに cffi で wcwidth 関数を呼んでいます。</p>
 
 <div><script src='https://gist.github.com/f93cb4471052cf6a0993.js?file=less.ros'></script>
 <noscript><pre><code>#!/bin/sh
@@ -120,15 +129,6 @@ exec ros -Q -- $0 &quot;$@&quot;
 
 
 
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>./less.ros hoge.txt</span></code></pre></td></tr></table></div></figure>
-
-
-<p>のようにして起動します。</p>
-
-<p>機能としてはhjklか矢印キーで移動してqで終了するだけです。
-文字幅を取得するのに cffi で wcwidth 関数を呼んでいます。</p>
 ]]></content>
   </entry>
   

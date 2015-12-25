@@ -10,7 +10,8 @@
 
   
   <meta name="description" content="CUIプログラムを作ろうとする時よく使われるライブラリとしてncursesというのがあります。
-Common Lispバインディングとしてはcl-cursesというのがあります。 練習として less コマンドのようなものを作ってみました。roswellスクリプトです。 #!/bin/sh &hellip;">
+それのCommon Lispバインディングとしてはcl-charmsというのがあります。 練習として less コマンドのようなものを作ってみました。roswellスクリプトです。 1
+./less. &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -101,9 +102,18 @@ Common Lispバインディングとしてはcl-cursesというのがあります
 
 
   <div class="entry-content"><p>CUIプログラムを作ろうとする時よく使われるライブラリとしてncursesというのがあります。
-Common Lispバインディングとしてはcl-cursesというのがあります。</p>
+それのCommon Lispバインディングとしては<a href="https://github.com/HiTECNOLOGYs/cl-charms">cl-charms</a>というのがあります。</p>
 
-<p>練習として less コマンドのようなものを作ってみました。roswellスクリプトです。</p>
+<p>練習として less コマンドのようなものを作ってみました。<a href="https://github.com/snmsts/roswell">roswell</a>スクリプトです。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>./less.ros hoge.txt</span></code></pre></td></tr></table></div></figure>
+
+
+<p>のようにして起動します。</p>
+
+<p>機能としてはhjklか矢印キーで移動してqで終了するだけです。
+文字幅を取得するのに cffi で wcwidth 関数を呼んでいます。</p>
 
 <div><script src='https://gist.github.com/f93cb4471052cf6a0993.js?file=less.ros'></script>
 <noscript><pre><code>#!/bin/sh
@@ -202,15 +212,6 @@ exec ros -Q -- $0 &quot;$@&quot;
 
 
 
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>./less.ros hoge.txt</span></code></pre></td></tr></table></div></figure>
-
-
-<p>のようにして起動します。</p>
-
-<p>機能としてはhjklか矢印キーで移動してqで終了するだけです。
-文字幅を取得するのに cffi で wcwidth 関数を呼んでいます。</p>
 </div>
   
   

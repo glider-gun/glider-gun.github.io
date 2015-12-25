@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Common Lisp | glider-gun's Blog]]></title>
   <link href="http://glider-gun.github.io/blog/categories/common-lisp/atom.xml" rel="self"/>
   <link href="http://glider-gun.github.io/"/>
-  <updated>2015-12-25T20:25:02+01:00</updated>
+  <updated>2015-12-25T20:37:43+01:00</updated>
   <id>http://glider-gun.github.io/</id>
   <author>
     <name><![CDATA[glider-gun]]></name>
@@ -18,7 +18,7 @@
     <link href="http://glider-gun.github.io/blog/2015/12/25/roswell-lesser-less/"/>
     <updated>2015-12-25T19:35:23+01:00</updated>
     <id>http://glider-gun.github.io/blog/2015/12/25/roswell-lesser-less</id>
-    <content type="html"><![CDATA[<p>CUIプログラムを作ろうとする時よく使われるライブラリとしてncursesというのがあります。
+    <content type="html"><![CDATA[<p>コンソール上で動くような少しリッチなプログラムを作ろうとする時よく使われるライブラリとしてncursesというのがあります。
 それのCommon Lispバインディングとしては<a href="https://github.com/HiTECNOLOGYs/cl-charms">cl-charms</a>というのがあります。</p>
 
 <p>練習として less コマンドのようなものを作ってみました。<a href="https://github.com/snmsts/roswell">roswell</a>スクリプトです。</p>

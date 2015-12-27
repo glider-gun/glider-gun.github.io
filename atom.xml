@@ -4,7 +4,7 @@
   <title><![CDATA[glider-gun's Blog]]></title>
   <link href="http://glider-gun.github.io/atom.xml" rel="self"/>
   <link href="http://glider-gun.github.io/"/>
-  <updated>2015-12-27T01:08:29+01:00</updated>
+  <updated>2015-12-27T01:10:26+01:00</updated>
   <id>http://glider-gun.github.io/</id>
   <author>
     <name><![CDATA[glider-gun]]></name>
@@ -178,7 +178,7 @@ exec ros -Q -- $0 &quot;$@&quot;
     <id>http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-5-miscellaneous</id>
     <content type="html"><![CDATA[<p>このエントリーは、著者の許可をいただいて <a href="http://malisper.me/category/debugging-common-lisp/">http://malisper.me/category/debugging-common-lisp/</a> のCommon Lispのデバッグに関する連載を翻訳するものです。</p>
 
-<p>目次: <a href="http://glider-gun.github.io/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu">第1回</a> <a href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-2-insupekuto">第2回</a> <a href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi/">第3回</a> <a href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-4-restart/">第4回</a> <a href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-5-miscellaneous/">第5回</a></p>
+<p><a href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-translation/">目次</a>: <a href="http://glider-gun.github.io/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu">第1回</a> <a href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-2-insupekuto">第2回</a> <a href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi/">第3回</a> <a href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-4-restart/">第4回</a> <a href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-5-miscellaneous/">第5回</a></p>
 
 <hr />
 
@@ -277,7 +277,7 @@ exec ros -Q -- $0 &quot;$@&quot;
     <id>http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-4-restart</id>
     <content type="html"><![CDATA[<p>このエントリーは、著者の許可をいただいて <a href="http://malisper.me/category/debugging-common-lisp/">http://malisper.me/category/debugging-common-lisp/</a> のCommon Lispのデバッグに関する連載を翻訳するものです。</p>
 
-<p>目次: <a href="http://glider-gun.github.io/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu">第1回</a> <a href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-2-insupekuto">第2回</a> <a href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi/">第3回</a> <a href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-4-restart/">第4回</a> <a href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-5-miscellaneous/">第5回</a></p>
+<p><a href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-translation/">目次</a>: <a href="http://glider-gun.github.io/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu">第1回</a> <a href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-2-insupekuto">第2回</a> <a href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi/">第3回</a> <a href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-4-restart/">第4回</a> <a href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-5-miscellaneous/">第5回</a></p>
 
 <hr />
 
@@ -598,7 +598,9 @@ exec ros -Q -- $0 &quot;$@&quot;
     <id>http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi</id>
     <content type="html"><![CDATA[<p>このエントリーは、著者の許可をいただいて <a href="http://malisper.me/category/debugging-common-lisp/">http://malisper.me/category/debugging-common-lisp/</a> のCommon Lispのデバッグに関する連載を翻訳するものです。</p>
 
-<h2>目次: <a href="http://glider-gun.github.io/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu">第1回</a> <a href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-2-insupekuto">第2回</a> <a href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi/">第3回</a> <a href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-4-restart/">第4回</a> <a href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-5-miscellaneous/">第5回</a></h2>
+<p><a href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-translation/">目次</a>: <a href="http://glider-gun.github.io/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu">第1回</a> <a href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-2-insupekuto">第2回</a> <a href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi/">第3回</a> <a href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-4-restart/">第4回</a> <a href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-5-miscellaneous/">第5回</a></p>
+
+<hr />
 
 <p>このエントリーは連載 Debbugging Lisp の第3回です。第1回は<a href="http://glider-gun.github.io/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu">こちら</a>、第2回は<a href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-2-insupekuto">こちら</a>。</p>
 
@@ -705,7 +707,7 @@ exec ros -Q -- $0 &quot;$@&quot;
     <id>http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-2-insupekuto</id>
     <content type="html"><![CDATA[<p>このエントリーは、著者の許可をいただいて <a href="http://malisper.me/category/debugging-common-lisp/">http://malisper.me/category/debugging-common-lisp/</a> のCommon Lispのデバッグに関する連載を翻訳するものです。</p>
 
-<p>目次: <a href="http://glider-gun.github.io/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu">第1回</a> <a href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-2-insupekuto">第2回</a> <a href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi/">第3回</a> <a href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-4-restart/">第4回</a> <a href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-5-miscellaneous/">第5回</a></p>
+<p><a href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-translation/">目次</a>: <a href="http://glider-gun.github.io/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu">第1回</a> <a href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-2-insupekuto">第2回</a> <a href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi/">第3回</a> <a href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-4-restart/">第4回</a> <a href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-5-miscellaneous/">第5回</a></p>
 
 <hr />
 
@@ -809,7 +811,7 @@ Slimeインスペクタは、オブジェクトをreplから直接操作する�
 <!-- もともとは[Lisp Advent Calendar 2015](http://qiita.com/advent-calendar/2015/lisp)の第18日目とし、全部翻訳して載せようかと思っていたのですが、間に合わなかったため第1回をまず掲載します。クリスマスまでに残りを掲載する予定です。サイトを作りたてでコメント欄は後で設置するつもりですが、その前に何かありましたらredditのコメント欄などは多分見てますので遠慮なくお寄せください。 -->
 
 
-<p>目次: <a href="http://glider-gun.github.io/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu">第1回</a> <a href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-2-insupekuto">第2回</a> <a href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi/">第3回</a> <a href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-4-restart/">第4回</a> <a href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-5-miscellaneous/">第5回</a></p>
+<p><a href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-translation/">目次</a>: <a href="http://glider-gun.github.io/blog/2015/12/19/debugging-lisp-part-1-zai-konpairu">第1回</a> <a href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-2-insupekuto">第2回</a> <a href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi/">第3回</a> <a href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-4-restart/">第4回</a> <a href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-5-miscellaneous/">第5回</a></p>
 
 <hr />
 

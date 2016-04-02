@@ -9,8 +9,9 @@
   <meta name="author" content="glider-gun">
 
   
-  <meta name="description" content="コンソール上で動くような少しリッチなプログラムを作ろうとする時よく使われるライブラリとしてncursesというのがあります。
-それのCommon Lispバインディングとしてはcl-charmsというのがあります。 練習として less コマンドのようなものを作ってみました。 &hellip;">
+  <meta name="description" content="roswell スクリプトとしてライフゲームを作ってみました。
+前回同様コンソールで動かすのに cl-charms を使っています。
+こんな感じです。 動画を見ると点が一番上のステータス表示より高い密度で表示されてるのがわかると思いますが、これはパターンの表示に点字を使ってみているからです。 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -77,6 +78,202 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2016/04/02/lifegame-braille/">点字でライフゲーム</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-04-02T09:52:08+09:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>2</span><span class='date-suffix'>nd</span>, <span class='date-year'>2016</span></span> <span class='time'>9:52 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p><a href="https://github.com/snmsts/roswell">roswell</a> スクリプトとしてライフゲームを作ってみました。
+前回同様コンソールで動かすのに cl-charms を使っています。
+こんな感じです。</p>
+
+<!-- <img class="center" src="/images/2016-04-02/braille_life.gif" width="500"> -->
+
+
+<center>
+<iframe src="https://player.vimeo.com/video/161259004?portrait=0" width="500" height="337" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen"></iframe>
+</center>
+
+
+<p>動画を見ると点が一番上のステータス表示より高い密度で表示されてるのがわかると思いますが、これはパターンの表示に点字を使ってみているからです。点字は縦横4x2の8点のパターンからなるので、これを使うとライフゲームの8倍高密度な表示が出来ます。unicodeの点字の文字コードと点の配置とは割と規則的に作られているので、盤面から文字コードを逆算するようにしました(参照: <a href="https://en.wikipedia.org/wiki/Braille_Patterns">https://en.wikipedia.org/wiki/Braille_Patterns</a> )。</p>
+
+<p>今回これを作っていて、ターミナルとして使うアプリによって動作速度が違うのが興味深かったです。上の動画はmacに元々入っているターミナルで動作させているのですが、iTerm2では(特にフルスクリーン状態では)フレームレートが10倍くらい落ちます。どうもncursesでワイド文字を描画しようとすると大きな速度差があるみたいです(ascii文字の範囲ではどっちで動かしても高速に動作していました)。</p>
+
+<p>処理系はsbclのみ対応です。最新版のcl-charmsでないと動かないので、cl-charms関連でエラーが出たら一旦</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ ros run
+</span><span class='line'>* (ql:update-all-dists)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>を試して見るといいかもしれません。あるいは</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ ros use sbcl</span></code></pre></td></tr></table></div></figure>
+
+
+<p>が必要かも?</p>
+
+<div><script src='https://gist.github.com/862bd661f9910f08e0ab.js'></script>
+<noscript><pre><code>#!/bin/sh
+#|-*- mode:lisp -*-|#
+#|
+exec ros -Q -- $0 &quot;$@&quot;
+|#
+(ql:quickload :cl-charms :silent t)
+(defpackage :ros.script.braille_life.3667932619
+  (:use :cl :charms/ll))
+(in-package :ros.script.braille_life.3667932619)
+
+;; (declaim (optimize (speed 3) (debug 0)))
+
+(defun make-board (w h)
+  (make-array (list w h)
+          :element-type &#39;bit
+          :initial-element 0))
+
+(defun randomize-board (board)
+  (dotimes (i (array-total-size board))
+    (setf (row-major-aref board i) (random 2)))
+  board)
+
+(defun print-board-no-curses (board)
+  (destructuring-bind (w h) (array-dimensions board)
+    (dotimes (y h)
+      (fresh-line)
+      (dotimes (x w)
+    (princ (if (plusp (aref board x y)) &quot;o&quot; &quot;_&quot;)))
+      (terpri))))
+
+(defun board-by-braille-at (board x0 y0)
+  (declare (type (simple-array (mod 2)) board)
+       (type fixnum x0 y0))
+  (let ((shift
+     (+ (* (aref board (+ x0 0) (+ y0 0)) 1)
+        (* (aref board (+ x0 0) (+ y0 1)) 2)
+        (* (aref board (+ x0 0) (+ y0 2)) 4)
+        (* (aref board (+ x0 1) (+ y0 0)) 8)
+        (* (aref board (+ x0 1) (+ y0 1)) 16)
+        (* (aref board (+ x0 1) (+ y0 2)) 32)
+        (* (aref board (+ x0 0) (+ y0 3)) 64)
+        (* (aref board (+ x0 1) (+ y0 3)) 128)))
+    (base #x2800))
+    (code-char (+ base shift))))
+
+(defun print-board-curses-braille (board window)
+  (declare (type (simple-array bit) board))
+  (destructuring-bind (w h) (array-dimensions board)
+    (declare (type fixnum w h))
+    (let ((buf (make-string (ash w -1))))
+      (dotimes (y (ash h -2))
+    (dotimes (x (ash w -1))
+      (setf (char buf x)
+        (board-by-braille-at board (* x 2) (* y 4))))
+    (wmove window y 0)
+    (waddstr window buf)))))
+
+(defun step-board (board)
+  (destructuring-bind (w h) (array-dimensions board)
+    (let ((new-board (make-board w h)))
+      (declare (type (simple-array bit) board new-board))
+      (labels ((population-at (board x y)
+         (declare (type fixnum x y w h))
+         (if (and (&lt; -1 x w)
+              (&lt; -1 y h))
+             (aref board x y)
+             0))
+           (count-neighbor (board x y)
+         (+ (population-at board (1- x) (1- y))
+            (population-at board (1- x) y)
+            (population-at board (1- x) (1+ y))
+            (population-at board x      (1- y))
+            (population-at board x      (1+ y))
+            (population-at board (1+ x) (1- y))
+            (population-at board (1+ x) y)
+            (population-at board (1+ x) (1+ y))))
+           (get-next-state (board x y)
+         (if (or (and (= (population-at board x y) 1)
+                  (member (count-neighbor board x y) &#39;(2 3)))
+             (and (= (population-at board x y) 0)
+                  (= (count-neighbor board x y) 3)))
+             1 0)))
+    (declare (type fixnum w h))
+    (dotimes (y h)
+      (dotimes (x w)
+        (setf (aref new-board x y)
+          (get-next-state board x y))))
+    new-board))))
+
+(defun count-population (board)
+  (let ((count 0))
+    (dotimes (i (array-total-size board))
+      (incf count (row-major-aref board i)))
+    count))
+
+(defun run ()
+  (cbreak)
+  (noecho)
+  (curs-set 0)
+  (keypad *stdscr* TRUE)
+  (nodelay *stdscr* TRUE)
+  (let ((main-window (newwin (1- *lines*) *cols* 1 0))
+    (status-window (newwin 1 *cols* 0 0)))
+    (do ((ch (getch) (getch))
+     (generation 0 (1+ generation))
+     (board (randomize-board (make-board (* 2 *cols*) (* 4 (1- *lines*))))
+        (step-board board)))
+    ((= ch (char-code #\q)))
+      (when (= ch (char-code #\r))
+    (setf board (randomize-board board)
+          generation 0))
+      (wclear status-window)
+      (wprintw status-window &quot; generation %4d | %4d cells alive | q to quit, r to restart&quot;
+           :int generation
+           :int (count-population board))
+      (wrefresh status-window)
+      (wclear main-window)
+      (print-board-curses-braille board main-window)
+      (wrefresh main-window)
+      ;; (wnoutrefresh main-window)
+      ;; (doupdate)
+      (sleep 0.05))
+    (delwin main-window)
+    (delwin status-window)))
+
+(defun main (&amp;rest argv)
+  (declare (ignorable argv))
+  (initscr)
+  (unwind-protect
+       (run)
+    (endwin)))
+</code></pre></noscript></div>
+
+
+
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1121,6 +1318,10 @@ Slimeインスペクタは、オブジェクトをreplから直接操作する�
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2016/04/02/lifegame-braille/">点字でライフゲーム</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2015/12/26/roswell-lesser-less/">Roswellでlessもどきを作ってみる</a>
       </li>
     
@@ -1134,10 +1335,6 @@ Slimeインスペクタは、オブジェクトをreplから直接操作する�
     
       <li class="post">
         <a href="/blog/2015/12/25/debugging-lisp-part-4-restart/">Debugging Lisp Part 4: リスタート</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2015/12/22/debugging-lisp-part-3-kurasufalsezai-ding-yi/">Debugging Lisp Part 3: クラスの再定義</a>
       </li>
     
   </ul>

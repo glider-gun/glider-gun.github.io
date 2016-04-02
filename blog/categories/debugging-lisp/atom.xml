@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Debugging Lisp | glider-gun's Blog]]></title>
   <link href="http://glider-gun.github.io/blog/categories/debugging-lisp/atom.xml" rel="self"/>
   <link href="http://glider-gun.github.io/"/>
-  <updated>2015-12-27T01:10:26+01:00</updated>
+  <updated>2016-04-02T09:46:44+09:00</updated>
   <id>http://glider-gun.github.io/</id>
   <author>
     <name><![CDATA[glider-gun]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Debugging Lisp を翻訳しました]]></title>
     <link href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-translation/"/>
-    <updated>2015-12-25T03:26:42+01:00</updated>
+    <updated>2015-12-25T11:26:42+09:00</updated>
     <id>http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-translation</id>
     <content type="html"><![CDATA[<p>Common Lispのデバッグに関する Michael Malis 氏の連載 <a href="http://malisper.me/category/debugging-common-lisp/">Debugging Lisp</a> の翻訳がひとまず終わりましたので、まとめてリンクを張っておきます。<a href="http://qiita.com/advent-calendar/2015/lisp">Lisp Advent Calendar 2015</a>の第18日目として第1回の記事へのリンクを張ってましたが、こっちに張り替えます。</p>
 
@@ -47,7 +47,7 @@
   <entry>
     <title type="html"><![CDATA[Debugging Lisp Part 5: その他こまごま]]></title>
     <link href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-5-miscellaneous/"/>
-    <updated>2015-12-25T02:12:41+01:00</updated>
+    <updated>2015-12-25T10:12:41+09:00</updated>
     <id>http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-5-miscellaneous</id>
     <content type="html"><![CDATA[<p>このエントリーは、著者の許可をいただいて <a href="http://malisper.me/category/debugging-common-lisp/">http://malisper.me/category/debugging-common-lisp/</a> のCommon Lispのデバッグに関する連載を翻訳するものです。</p>
 
@@ -141,7 +141,7 @@
   <entry>
     <title type="html"><![CDATA[Debugging Lisp Part 4: リスタート]]></title>
     <link href="http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-4-restart/"/>
-    <updated>2015-12-25T02:07:20+01:00</updated>
+    <updated>2015-12-25T10:07:20+09:00</updated>
     <id>http://glider-gun.github.io/blog/2015/12/25/debugging-lisp-part-4-restart</id>
     <content type="html"><![CDATA[<p>このエントリーは、著者の許可をいただいて <a href="http://malisper.me/category/debugging-common-lisp/">http://malisper.me/category/debugging-common-lisp/</a> のCommon Lispのデバッグに関する連載を翻訳するものです。</p>
 
@@ -350,7 +350,7 @@
   <entry>
     <title type="html"><![CDATA[Debugging Lisp Part 2: インスペクト]]></title>
     <link href="http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-2-insupekuto/"/>
-    <updated>2015-12-22T00:17:50+01:00</updated>
+    <updated>2015-12-22T08:17:50+09:00</updated>
     <id>http://glider-gun.github.io/blog/2015/12/22/debugging-lisp-part-2-insupekuto</id>
     <content type="html"><![CDATA[<p>このエントリーは、著者の許可をいただいて <a href="http://malisper.me/category/debugging-common-lisp/">http://malisper.me/category/debugging-common-lisp/</a> のCommon Lispのデバッグに関する連載を翻訳するものです。</p>
 

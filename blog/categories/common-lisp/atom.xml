@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Common Lisp | glider-gun's Blog]]></title>
   <link href="http://glider-gun.github.io/blog/categories/common-lisp/atom.xml" rel="self"/>
   <link href="http://glider-gun.github.io/"/>
-  <updated>2016-04-02T12:36:16+09:00</updated>
+  <updated>2018-04-05T21:51:59+09:00</updated>
   <id>http://glider-gun.github.io/</id>
   <author>
     <name><![CDATA[glider-gun]]></name>
@@ -61,7 +61,7 @@ exec ros -Q -- $0 &quot;$@&quot;
 
 (defun make-board (w h)
   (make-array (list w h)
-	      :element-type &#39;bit
+	      :element-type 'bit
 	      :initial-element 0))
 
 (defun randomize-board (board)
@@ -125,7 +125,7 @@ exec ros -Q -- $0 &quot;$@&quot;
 		    (population-at board (1+ x) (1+ y))))
 	       (get-next-state (board x y)
 		 (if (or (and (= (population-at board x y) 1)
-			      (member (count-neighbor board x y) &#39;(2 3)))
+			      (member (count-neighbor board x y) '(2 3)))
 			 (and (= (population-at board x y) 0)
 			      (= (count-neighbor board x y) 3)))
 		     1 0)))
@@ -248,9 +248,9 @@ exec ros -Q -- $0 &quot;$@&quot;
 
     (charms/ll:cbreak)			; get key input immediately,
 					; but 
-    (charms/ll:noecho)			; don&#39;t display key inputted from user
+    (charms/ll:noecho)			; don't display key inputted from user
     (charms/ll:keypad pad 1)		; accept special keys like arrow keys
-    (charms/ll:curs-set 0)		; don&#39;t show cursor
+    (charms/ll:curs-set 0)		; don't show cursor
 
     ;; initialize pad contents
     (loop for l in lines

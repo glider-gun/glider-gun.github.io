@@ -145,7 +145,7 @@ exec ros -Q -- $0 &quot;$@&quot;
 
 (defun make-board (w h)
   (make-array (list w h)
-          :element-type &#39;bit
+          :element-type 'bit
           :initial-element 0))
 
 (defun randomize-board (board)
@@ -209,7 +209,7 @@ exec ros -Q -- $0 &quot;$@&quot;
             (population-at board (1+ x) (1+ y))))
            (get-next-state (board x y)
          (if (or (and (= (population-at board x y) 1)
-                  (member (count-neighbor board x y) &#39;(2 3)))
+                  (member (count-neighbor board x y) '(2 3)))
              (and (= (population-at board x y) 0)
                   (= (count-neighbor board x y) 3)))
              1 0)))
@@ -392,7 +392,7 @@ exec ros -Q -- $0 &quot;$@&quot;
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2016 - glider-gun -
+  Copyright &copy; 2018 - glider-gun -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 

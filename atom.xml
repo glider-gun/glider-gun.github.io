@@ -4,7 +4,7 @@
   <title><![CDATA[glider-gun's Blog]]></title>
   <link href="http://glider-gun.github.io/atom.xml" rel="self"/>
   <link href="http://glider-gun.github.io/"/>
-  <updated>2018-04-05T21:51:59+09:00</updated>
+  <updated>2018-04-05T22:16:49+09:00</updated>
   <id>http://glider-gun.github.io/</id>
   <author>
     <name><![CDATA[glider-gun]]></name>
@@ -12,6 +12,15 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[生存確認]]></title>
+    <link href="http://glider-gun.github.io/blog/2018/04/05/ping/"/>
+    <updated>2018-04-05T21:55:46+09:00</updated>
+    <id>http://glider-gun.github.io/blog/2018/04/05/ping</id>
+    <content type="html"><![CDATA[<p>ずっと放置していたけどOctopressまだ動くんだろうか？</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[点字でライフゲーム]]></title>
